@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import logo from '../../assets/images/orange-logo.svg'
+import logo from './assets/orange-logo.png'
 import close from './assets/close-white.svg'
 import picture from './assets/profile-pic.svg'
 import pet from './assets/pet-image.png'
@@ -77,8 +77,8 @@ function CreateAccount({ createOpen, createClose }) {
             transition: 'left 0.7s ease-in-out',
             }}
         className='fixed z-40 top-0 bg-primary min-h-screen max-h-screen overflow-auto w-full flex flex-col text-text font-poppins'>
-            <div className='w-full relative flex shrink-0 h-28 justify-center md:justify-start   px-7'>
-                <img draggable='false' className='w-32' src={logo} alt="" />
+            <div className='w-full relative flex shrink-0 py-7 justify-center md:justify-start px-7'>
+                <img draggable='false' className='w-48' src={logo} alt="" />
                 <div onClick={createClose} className='absolute top-4 right-4 border-2 border-primary hover:border-secondary cursor-pointer p-1 duration-150'>
                     <img src={close} alt="" />
                 </div>
@@ -91,6 +91,9 @@ function CreateAccount({ createOpen, createClose }) {
                     <h1 className='text-3xl font-semibold'>Create Account</h1>
                     <div className='flex flex-col items-center mt-3'>
                         <img draggable='false' className='w-20 rounded-full' src={profilePicture ? URL.createObjectURL(profilePicture) : picture} alt="" />
+                        <button type='button' onClick={() => document.getElementById('profile-picture-input').click()} className='bg-[#00ACAC] cursor-pointer hover:bg-[#0ec0c0] duration-150 text-secondary font-medium text-sm py-1 px-2 rounded-lg mt-3'>Profile Picture</button>
+                    </div>
+                    <form onSubmit={handleCreateAccount} className='w-full px-10 sm:px-20 md:px-10 mt-2'>
                         <input 
                             type="file" 
                             onChange={handleFileChange} 
@@ -98,9 +101,6 @@ function CreateAccount({ createOpen, createClose }) {
                             style={{display: 'none'}} 
                             id="profile-picture-input"
                         />
-                        <button type='button' onClick={() => document.getElementById('profile-picture-input').click()} className='bg-[#00ACAC] cursor-pointer hover:bg-[#0ec0c0] duration-150 text-secondary font-medium text-sm py-1 px-2 rounded-lg mt-3'>Profile Picture</button>
-                    </div>
-                    <form onSubmit={handleCreateAccount} className='w-full px-10 sm:px-20 md:px-10 mt-2'>
                         <p className='font-semibold'>Full Name</p>
                         <input onChange={(e) => setFullName(e.target.value)} required value={fullName} autoComplete='off' className='w-full mb-4 md:mb-3 py-2 px-3 rounded-lg outline-none bg-[#D9D9D9]' type="text" />
                         <p className='font-semibold'>Phone Number</p>

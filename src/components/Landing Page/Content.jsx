@@ -7,7 +7,7 @@ import arrow from './assets/arrow.svg'
 import logo from './assets/orange-paws.png'
 import AnimalCard from '../General/AnimalCard'
 
-function Content({ onLoginClick, onPickClick }) {
+function Content({ onLoginClick, openDog }) {
   return (
     <div className='h-full'>
       {/* BANNER */}
@@ -23,15 +23,15 @@ function Content({ onLoginClick, onPickClick }) {
           <p className='drop-shadow-lg md:hidden mb-3 text-xs sm:text-sm px-5 text-center'>Adopt a pet. Connect with owners and bring home your new companion.</p>
           {/* CARDS */}
           <div className='absolute grid grid-cols-2 md:grid-cols-3 gap-4 bottom-[-17.5rem] md:-bottom-20'>
-            <button onClick={onPickClick} className='bg-[#FAFAFA] border-[1px] gap-3 py-5 px-7 rounded-xl drop-shadow-md hover:cursor-pointer hover:drop-shadow-xl duration-150 flex flex-col items-center justify-center'>
+            <button onClick={openDog} className='bg-[#FAFAFA] border-[1px] gap-3 py-5 px-7 rounded-xl drop-shadow-md hover:cursor-pointer hover:drop-shadow-xl duration-150 flex flex-col items-center justify-center'>
               <img className='w-16' src={dogs} alt="" />
               <p className='text-primary font-medium'>Dogs</p>
             </button>
-            <button onClick={onPickClick} className='bg-[#FAFAFA] border-[1px] gap-3 py-5 px-7 rounded-xl drop-shadow-md hover:cursor-pointer hover:drop-shadow-xl duration-150 flex flex-col items-center justify-center'>
+            <button className='bg-[#FAFAFA] border-[1px] gap-3 py-5 px-7 rounded-xl drop-shadow-md hover:cursor-pointer hover:drop-shadow-xl duration-150 flex flex-col items-center justify-center'>
               <img className='w-16' src={cats} alt="" />
               <p className='text-primary font-medium'>Cats</p>
             </button>
-            <button onClick={onPickClick} className='bg-[#FAFAFA] border-[1px] gap-3 col-span-2 md:col-span-1 py-5 px-7 rounded-xl drop-shadow-md hover:cursor-pointer hover:drop-shadow-xl duration-150 flex flex-col items-center justify-center'>
+            <button className='bg-[#FAFAFA] border-[1px] gap-3 col-span-2 md:col-span-1 py-5 px-7 rounded-xl drop-shadow-md hover:cursor-pointer hover:drop-shadow-xl duration-150 flex flex-col items-center justify-center'>
               <img className='w-16' src={shelter} alt="" />
               <p className='text-primary font-medium'>Shelter & Rescues</p>
             </button>
@@ -46,7 +46,7 @@ function Content({ onLoginClick, onPickClick }) {
           <AnimalCard onLoginClick={onLoginClick}/>
           <div className='w-full max-w-48 relative m-auto items-center justify-between h-64 bg-primary flex flex-col drop-shadow-lg rounded-xl overflow-hidden'>
             <img className='w-32 pt-4' src={logo} alt="" />
-            <p className='text-white text-sm px-3 text-center'>3 more pets available on Paws</p>
+            <p className='text-white text-sm px-3 text-center'>3 more pets available on HomePaws</p>
             <p onClick={onLoginClick} className='text-white hover:bg-[#ff6c6c] duration-150 cursor-pointer font-medium w-full flex justify-center items-center border-t-[1px] border-white h-11'>MEET THEM</p>
           </div>
         </div>

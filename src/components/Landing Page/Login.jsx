@@ -58,8 +58,8 @@ function Login({ isOpen, onClose, handleCreateClick, handleLogin }) {
                 }}
         className='fixed top-0 bg-secondary z-30 w-full md:w-96 min-h-screen max-h-screen flex flex-col overflow-auto'>
         
-            <div className='w-full relative flex flex-col p-6 h-sm:p-8 items-center justify-center'>
-                <img className='w-36 h-sm:w-40' src={logo} alt="" />
+            <div className='w-full relative flex flex-col py-6 sm:pt-8 sm:pb-6 items-center justify-center'>
+                <img className='w-52' src={logo} alt="" />
                 <button onClick={onClose} className='absolute top-4 right-4 p-1 duration-150 cursor-pointer border-2 border-transparent hover:border-[#F75959]'>
                     <img className='w-6 h-sm:w-7' src={close} alt="" />
                 </button>

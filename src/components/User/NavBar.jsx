@@ -19,7 +19,7 @@ function NavBar() {
   return (
     <>
       {/* MOBILE VIEW */}
-      <div className='fixed top-20 w-full bg-secondary items-center flex justify-between px-10 sm:px-14 md:px-28 pb-3 pt-2 -mt-1 shadow-md lg:hidden'>
+      <div className='fixed top-20 w-full text-text bg-secondary items-center flex justify-between px-10 sm:px-14 md:px-28 pb-3 pt-2 -mt-1 shadow-md lg:hidden'>
         {/* FIND PET */}
         <div className={`py-2 hover:bg-[#D9D9D9] cursor-pointer duration-150 px-3 rounded-md ${activeIcon === 'findpet' ? 'bg-primary hover:bg-primary' : ''}`} onClick={() => handleIconClick('findpet')}>
           {activeIcon === 'findpet' ? (
@@ -107,12 +107,12 @@ function NavBar() {
             {activeIcon === 'profile' ? (
               <div className='flex items-center'>
                 <img className='pl-5 w-14' src={activeprofile} alt="" />
-                <p className='text-base text-secondary font-semibold pl-6'>Profile</p>
+                <p className='text-base text-secondary font-semibold pl-5'>Profile</p>
               </div>
             ) : (
               <div className='flex items-center'>
                 <img className='pl-5 w-14' src={profile} alt="" />
-                <p className='text-base font-semibold pl-6'>Profile</p>
+                <p className='text-base text font-semibold pl-5'>Profile</p>
               </div>
             )}
           </div>

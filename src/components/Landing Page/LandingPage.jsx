@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import Header from './Header'
 import Content from './Content'
 import Footer from './Footer'
@@ -7,61 +7,40 @@ import CreateAccount from './CreateAccount'
 import AccountForm from './AccountForm'
 import Cards from './Cards'
 import LoginForm from './LoginForm'
-import Pick from './Pick'
+import Dog from './Dogs'
+import { useSelector, useDispatch } from 'react-redux';
+import { 
+  toggleLogin, closeLogin, 
+  toggleCreate, closeCreate, 
+  toggleIsLogin, closeIsLogin, 
+  toggleDog, closeDog 
+} from '../../store/uiSlice';
 
 function LandingPage() {
 
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isLogin, setIsLogin] = useState(false);
-  const [isPick, setIsPick] = useState(false);
-
-  const handleLoginClick = () => {
-    setIsLoginOpen(!isLoginOpen);
-  };
-
-  const handleClose = () => {
-    setIsLoginOpen(false);
-  };
-
-  const handleCreateClick = () => {
-    setIsCreateOpen(!isCreateOpen);
-  };
-
-  const handleCloseCreate = () => {
-    setIsCreateOpen(false);
-  };
-
-  const handleLogin = () => {
-    setIsLogin(!isCreateOpen);
-  };
-
-  const handleCloseLogin = () => {
-    setIsLogin(false);
-  };
-
-  const handlePick = () => {
-    setIsPick(!isPick);
-  };
-
-  const handleClosePick = () => {
-    setIsPick(false);
-  };
-
-
+  const dispatch = useDispatch();
+  const isLoginOpen = useSelector(state => state.ui.isLoginOpen);
+  const isCreateOpen = useSelector(state => state.ui.isCreateOpen);
+  const isLogin = useSelector(state => state.ui.isLogin);
+  const isDogOpen = useSelector(state => state.ui.isDogOpen);
 
   return (
     <div className='relative min-h-screen flex flex-col select-none'>
       < AccountForm />
       < Cards />
-      < Pick pickOpen={isPick} pickClose={handleClosePick} />
-      < CreateAccount createOpen={isCreateOpen} createClose={handleCloseCreate} />
-      < LoginForm loginOpen={isLogin} loginClose={handleCloseLogin} />
-      < Login isOpen={isLoginOpen} onClose={handleClose} handleCreateClick={handleCreateClick} handleLogin={handleLogin}/>
+      < Dog isOpen={isDogOpen} isClose={() => dispatch(closeDog())} onLoginClick={() => dispatch(toggleLogin())}/>
+      < CreateAccount createOpen={isCreateOpen} createClose={() => dispatch(closeCreate())} />
+      < LoginForm loginOpen={isLogin} loginClose={() => dispatch(closeIsLogin())} />
+      < Login 
+        isOpen={isLoginOpen} 
+        onClose={() => dispatch(closeLogin())} 
+        handleCreateClick={() => dispatch(toggleCreate())} 
+        handleLogin={() => dispatch(toggleIsLogin())} 
+      />
       <div className='bg-[#FAFAFA] relative'>
-        {isLoginOpen && (<div className='fixed inset-0 duration-150 bg-black opacity-50 z-20'></div>)}
-        < Header onLoginClick={handleLoginClick} />
-        < Content onLoginClick={handleLoginClick} onPickClick={handlePick}/>
+        {isLoginOpen && (<div onClick={() => dispatch(closeLogin())}  className='fixed inset-0 duration-150 bg-black opacity-50 z-20'></div>)}
+        < Header onLoginClick={() => dispatch(toggleLogin())} />
+        < Content onLoginClick={() => dispatch(toggleLogin())} openDog={() => dispatch(toggleDog())}/>
         < Footer />
       </div>
     </div>

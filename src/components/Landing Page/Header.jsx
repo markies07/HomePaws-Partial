@@ -6,7 +6,7 @@ function Header({ onLoginClick }) {
   return (
     <header className='bg-[#FAFAFA] h-20 flex justify-between items-center px-5 md:px-10'>
         <div className='w-full lg:pl-10'>
-            <img className='w-28' src={logoWhite} alt="" />
+            <img className='w-44 sm:w-48' src={logoWhite} alt="" />
         </div>
         <div>
             <button onClick={onLoginClick} className='flex gap-3 cursor-pointer justify-center rounded-full items-center px-10 py-2 duration-150 hover:bg-primaryHover active:bg-[#F75959] bg-primary'>

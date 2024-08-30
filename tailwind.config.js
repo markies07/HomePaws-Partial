@@ -11,7 +11,9 @@ export default {
       },
       colors: {
         primary: '#F75959',
+        primaryHover: '#ff6f6f',
         secondary: '#FAFAFA',
+        text: '#5D5D5D',
       },
       screens: {
         'h-sm': { 'raw': '(min-height: 850px)' },
