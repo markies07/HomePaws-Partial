@@ -1,6 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, FacebookAuthProvider, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, FacebookAuthProvider, 
+createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut,
+signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 
 
 // Your web app's Firebase configuration
@@ -20,4 +22,6 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
 
-export { auth, provider, facebookProvider, signInWithPopup, createUserWithEmailAndPassword };
+export { auth, provider, facebookProvider, signInWithPopup, createUserWithEmailAndPassword,
+  sendEmailVerification, onAuthStateChanged, getAuth, signOut,
+  signInWithEmailAndPassword, sendPasswordResetEmail, };

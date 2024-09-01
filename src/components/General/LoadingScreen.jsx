@@ -7,7 +7,7 @@ const LoadingScreen = () => {
       <img
         src={logo}
         alt="Paws Logo"
-        className="w-24 h-24 animate-bounce"
+        className="w-24 h-24 object-contain animate-bounce"
       />
     </div>
   );

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import logo from './assets/orange-logo.png'
 import close from './assets/close-white.svg'
 import picture from './assets/profile-pic.svg'
 import pet from './assets/pet-image.png'
-import { createUserWithEmailAndPassword, auth } from '../../firebase/firebase'
+import { createUserWithEmailAndPassword, sendEmailVerification, auth, onAuthStateChanged } from '../../firebase/firebase'
 import { getFirestore, doc, setDoc } from 'firebase/firestore'
-import { notifyErrorWhite, notifySuccessWhite } from '../General/CustomToast'
+import { notifyErrorWhite, notifySuccessWhite, notifyInfoWhite } from '../General/CustomToast'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 function CreateAccount({ createOpen, createClose }) {
@@ -15,6 +15,9 @@ function CreateAccount({ createOpen, createClose }) {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [profilePicture, setProfilePicture] = useState(null);
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [user, setUser] = useState(null);
+    const [pendingUserData, setPendingUserData] = useState(null);
 
     const db = getFirestore();
 
@@ -25,6 +28,9 @@ function CreateAccount({ createOpen, createClose }) {
         setPassword('');
         setConfirmPassword('');
         setProfilePicture(null);
+        setIsVerifying(false);
+        setUser(null);
+        setPendingUserData(null);
     };
 
     const handleFileChange = (e) => {
@@ -33,40 +39,100 @@ function CreateAccount({ createOpen, createClose }) {
         }
     };
 
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            console.log("Auth state changed", currentUser);
+            if (currentUser) {
+                setUser(currentUser);
+                if (currentUser.emailVerified && pendingUserData) {
+                    console.log("Email verified");
+                    setIsVerifying(false);
+                    try {
+                        await createUserDocument(currentUser, pendingUserData);
+                        notifySuccessWhite("Account created successfully!");
+                        resetForm();
+                    } catch (error) {
+                        console.error("Error creating user document:", error);
+                        notifyErrorWhite("Error creating account. Please try again.");
+                    }
+                } else if (isVerifying) {
+                    console.log("Email not verified yet");
+                }
+            } else {
+                setUser(null);
+                setIsVerifying(false);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [isVerifying, pendingUserData]);
+
+    const createUserDocument = async (user, userData) => {
+        let profilePictureURL = '';
+        if (userData.profilePicture) {
+            const storage = getStorage();
+            const storageRef = ref(storage, `profilePictures/${user.uid}`);
+            await uploadBytes(storageRef, userData.profilePicture);
+            profilePictureURL = await getDownloadURL(storageRef);
+        }
+
+        await setDoc(doc(db, 'users', user.uid), {
+            fullName: userData.fullName,
+            phoneNumber: userData.phoneNumber,
+            email: userData.email,
+            profilePictureURL,
+            createdAt: new Date(),
+        });
+    };
+
     const handleCreateAccount = async (e) => {
         e.preventDefault();
         console.log("Creating account...");
-        if(password !== confirmPassword){
-            notifyErrorWhite("Password don't match!");
+        if (password !== confirmPassword) {
+            notifyErrorWhite("Passwords don't match!");
             return;
         }
 
-        try{
+        try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
+            const newUser = userCredential.user;
 
-            let profilePictureURL = '';
-            if(profilePicture) {
-                const storage = getStorage();
-                const storageRef = ref(storage, `profilePictures/${user.uid}`);
-                await uploadBytes(storageRef, profilePicture);
-                profilePictureURL = await getDownloadURL(storageRef);
-            }
-
-            await setDoc(doc(db, 'users', user.uid), {
+            // Store the user data to be used after email verification
+            setPendingUserData({
                 fullName,
                 phoneNumber,
                 email,
-                profilePictureURL,
-                createdAt: new Date(),
+                profilePicture
             });
 
-            notifySuccessWhite("Account created successfully!");
-            resetForm();
-        }
-        catch(error){
+            // Send verification email
+            await sendEmailVerification(newUser);
+            setIsVerifying(true);
+            notifyInfoWhite("Email verification email sent.");
+        } catch (error) {
             console.error('Error creating account: ', error);
-            notifyErrorWhite("This email already exists!");
+            notifyErrorWhite("An error occurred. Please try again.");
+            setIsVerifying(false);
+        }
+    }
+
+    const handleRefreshVerification = async () => {
+        if (user) {
+            try {
+                await user.reload();
+                if (user.emailVerified && pendingUserData) {
+                    setIsVerifying(false);
+                    await createUserDocument(user, pendingUserData);
+                    resetForm();
+                } else {
+                    notifyInfoWhite("Email not verified yet. Please check your inbox.");
+                }
+            } catch (error) {
+                console.error("Error refreshing user:", error);
+                notifyErrorWhite("Error checking verification status. Please try again.");
+            }
+        } else {
+            notifyErrorWhite("No user signed in. Please try again.");
         }
     }
 
@@ -111,8 +177,26 @@ function CreateAccount({ createOpen, createClose }) {
                         <input onChange={(e) => setPassword(e.target.value)} required value={password} autoComplete='off' className='w-full mb-4 md:mb-3 py-2 px-3 rounded-lg outline-none bg-[#D9D9D9]' type="password" />
                         <p className='font-semibold'>Confirm Password</p>
                         <input onChange={(e) => setConfirmPassword(e.target.value)} required value={confirmPassword} autoComplete='off' className='w-full mb-4 md:mb-3 py-2 px-3 rounded-lg outline-none bg-[#D9D9D9]' type="password" />
-                        <div className='mt-2 mb-2 flex justify-center'>
-                            <button type="submit" className='bg-primary hover:bg-primaryHover duration-150 font-semibold text-secondary py-3 px-7 rounded-lg'>Create Account</button>
+                        <div className='mt-2 mb-2 flex flex-col items-center'>
+                            {isVerifying ? (
+                                <>
+                                    <p>Please verify your email to complete registration.</p>
+                                    <button 
+                                        type="button" 
+                                        onClick={handleRefreshVerification}
+                                        className='bg-secondary text-primary hover:bg-secondaryHover duration-150 font-semibold py-2 px-4 rounded-lg mt-2'
+                                    >
+                                        I've verified my email
+                                    </button>
+                                </>
+                            ) : (
+                                <button 
+                                    type="submit" 
+                                    className='bg-primary hover:bg-primaryHover duration-150 font-semibold text-secondary py-3 px-7 rounded-lg'
+                                >
+                                    Create Account
+                                </button>
+                            )}
                         </div>
                     </form>
                 </div>
@@ -122,3 +206,6 @@ function CreateAccount({ createOpen, createClose }) {
 }
 
 export default CreateAccount
+
+// markchristian.naval@cvsu.edu.ph
+// lorenaflores31

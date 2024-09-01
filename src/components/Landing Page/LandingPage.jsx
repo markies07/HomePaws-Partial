@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import Header from './Header'
 import Content from './Content'
 import Footer from './Footer'
@@ -15,8 +15,16 @@ import {
   toggleIsLogin, closeIsLogin, 
   toggleDog, closeDog 
 } from '../../store/uiSlice';
+import { AuthContext } from '../General/AuthProvider'
+import { Navigate } from 'react-router-dom'
 
 function LandingPage() {
+
+  const { user } = useContext(AuthContext);
+
+  if (user) {
+      return <Navigate to="/dashboard" />; // Redirect to the landing page if not logged in
+  }
 
   const dispatch = useDispatch();
   const isLoginOpen = useSelector(state => state.ui.isLoginOpen);
