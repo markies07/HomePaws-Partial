@@ -5,14 +5,11 @@ import image from './assets/login-pic.jpg'
 import google from './assets/google.svg'
 import facebook from './assets/facebook.svg'
 import { useNavigate } from 'react-router-dom'
-import LoadingScreen from '../General/LoadingScreen'
 import { notifyErrorOrange, notifySuccessOrange } from '../General/CustomToast'
 import { auth, provider, signInWithPopup, facebookProvider } from '../../firebase/firebase'
 
 
 function Login({ isOpen, onClose, handleCreateClick, handleLogin }) {
-    const [isLoading, setIsLoading] = useState(false);
-  
     const navigate = useNavigate();
 
     const handleGoogleLogin = async () => {
@@ -20,7 +17,6 @@ function Login({ isOpen, onClose, handleCreateClick, handleLogin }) {
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
             console.log('User Info: ', user);
-            setIsLoading(true);
             notifySuccessOrange('Login Successfully!');
             setTimeout(() => {
                 navigate('/dashboard');
@@ -37,7 +33,6 @@ function Login({ isOpen, onClose, handleCreateClick, handleLogin }) {
             const result = await signInWithPopup(auth, facebookProvider);
             const user = result.user;
             console.log('User Info: ', user);
-            setIsLoading(true);
             notifySuccessOrange('Login Successfully!');
             setTimeout(() => {
                 navigate('/dashboard');
@@ -83,7 +78,6 @@ function Login({ isOpen, onClose, handleCreateClick, handleLogin }) {
                     </div>
                 </div>
                 <div className='w-[80%] pb-10 flex flex-col gap-2'>
-                    {isLoading && <LoadingScreen />}
                     <button onClick={handleGoogleLogin} className='w-full relative py-2 h-sm:py-3 font-medium rounded-lg border-2 border-[#179C52] text-secondary hover:bg-[#138847] hover:border-[#138847] bg-[#179C52] duration-150'>Log in with Google
                         <img className='absolute top-[7px] h-sm:top-[11px] left-[14px] w-[25px]' src={google} alt="" />
                     </button>

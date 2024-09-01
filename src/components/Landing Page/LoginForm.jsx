@@ -7,13 +7,11 @@ import password_icon from './assets/password.svg'
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth'
 import { auth } from '../../firebase/firebase'
 import { notifySuccessOrange, notifyErrorOrange } from '../General/CustomToast'
-import LoadingScreen from '../General/LoadingScreen'
 import { useNavigate } from 'react-router-dom'
 
 function LoginForm({loginOpen, loginClose}) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
@@ -22,7 +20,6 @@ function LoginForm({loginOpen, loginClose}) {
         try{
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             notifySuccessOrange("Login Successfully!");
-            setIsLoading(true);
             setTimeout(() => {
                 navigate('/dashboard');
             }, 3000);
@@ -67,7 +64,6 @@ function LoginForm({loginOpen, loginClose}) {
         transition: 'right 0.5s ease-in-out',}}
         className='fixed top-0 right-0 bg-secondary z-40 w-full md:w-96 min-h-screen max-h-screen flex flex-col overflow-auto'>
             <div className='w-full relative flex flex-col py-6 sm:pt-8 sm:pb-6 items-center justify-center'>
-                {isLoading && <LoadingScreen />}
                 <img className='w-52' src={logo} alt="" />
                 <button onClick={loginClose} className='absolute top-4 right-4 p-1 duration-150 cursor-pointer border-2 border-transparent hover:border-[#F75959]'>
                     <img className='w-6 h-sm:w-7' src={close} alt="" />

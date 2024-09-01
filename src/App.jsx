@@ -1,9 +1,10 @@
 import React from "react"
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom"
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
 import LandingPage from "./components/Landing Page/LandingPage"
 import Dashboard from "./components/User/Dashboard"
 import { ToastContainer } from "react-toastify"
 import { AuthProvider } from "./components/General/AuthProvider"
+import PrivateRoute from "./components/General/PrivateRoute"
 
 function App() {
   
@@ -12,8 +13,9 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />}/>
-          <Route path="/dashboard" element={<Dashboard />}/>
-          <Route path="*" element={<Navigate to="/"/>}/>
+          <Route element={<PrivateRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Route>
         </Routes>
         <ToastContainer
           position="top-right"

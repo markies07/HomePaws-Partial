@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import logout from './assets/logout.svg'
 import paw from '../../assets/images/white-paws.png'
 import { signOut } from 'firebase/auth'
@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { notifyErrorOrange, notifySuccessOrange } from '../General/CustomToast'
 
 
-function Logout({isOpen, loading}) {
+function Logout({isOpen}) {
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -15,10 +15,8 @@ function Logout({isOpen, loading}) {
         try{
             await signOut(auth);
             notifySuccessOrange("Logout successful!");
-            loading(true)
             setTimeout(() => {
                 navigate('/');
-                window.location.reload();
             }, 3000);
             
         }
@@ -37,7 +35,7 @@ function Logout({isOpen, loading}) {
             <div className='w-full flex px-7 items-center py-5'>
                 <div className='flex flex-col h-full w-56'>
                     <p className='text-sm opacity-80'>Good day,</p>
-                    <p className='text-2xl font-medium'>Lorena Flores</p>    
+                    <p className='text-2xl font-medium'>Mark Naval</p>    
                 </div>
                 <div className='w-14 flex items-center justify-center ml-3'>
                     <img src={paw} className='w-full' alt="" />
