@@ -10,7 +10,7 @@ const PrivateRoute = () => {
         return <LoadingScreen />;
     }
 
-    return user ? <Outlet /> : <Navigate to="/" />;
+    return user && user.emailVerified ? <Outlet /> : <Navigate to="/" />;
 };
 
 export default PrivateRoute;

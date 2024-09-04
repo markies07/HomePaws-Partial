@@ -10,7 +10,6 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 function CreateAccount({ createOpen, createClose }) {
     const [fullName, setFullName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -23,7 +22,6 @@ function CreateAccount({ createOpen, createClose }) {
 
     const resetForm = () => {
         setFullName('');
-        setPhoneNumber('');
         setEmail('');
         setPassword('');
         setConfirmPassword('');
@@ -44,18 +42,18 @@ function CreateAccount({ createOpen, createClose }) {
             console.log("Auth state changed", currentUser);
             if (currentUser) {
                 setUser(currentUser);
-                if (currentUser.emailVerified && pendingUserData) {
-                    console.log("Email verified");
-                    setIsVerifying(false);
+                if (user && user.emailVerified && isVerifying && pendingUserData) {
                     try {
-                        await createUserDocument(currentUser, pendingUserData);
+                        createUserDocument(user, pendingUserData);
+                        setIsVerifying(false);
                         notifySuccessWhite("Account created successfully!");
                         resetForm();
                     } catch (error) {
                         console.error("Error creating user document:", error);
                         notifyErrorWhite("Error creating account. Please try again.");
                     }
-                } else if (isVerifying) {
+                }
+                else if (isVerifying) {
                     console.log("Email not verified yet");
                 }
             } else {
@@ -78,7 +76,6 @@ function CreateAccount({ createOpen, createClose }) {
 
         await setDoc(doc(db, 'users', user.uid), {
             fullName: userData.fullName,
-            phoneNumber: userData.phoneNumber,
             email: userData.email,
             profilePictureURL,
             createdAt: new Date(),
@@ -100,7 +97,6 @@ function CreateAccount({ createOpen, createClose }) {
             // Store the user data to be used after email verification
             setPendingUserData({
                 fullName,
-                phoneNumber,
                 email,
                 profilePicture
             });
@@ -169,15 +165,13 @@ function CreateAccount({ createOpen, createClose }) {
                         />
                         <p className='font-semibold'>Full Name</p>
                         <input onChange={(e) => setFullName(e.target.value)} required value={fullName} autoComplete='off' className='w-full mb-4 md:mb-3 py-2 px-3 rounded-lg outline-none bg-[#D9D9D9]' type="text" />
-                        <p className='font-semibold'>Phone Number</p>
-                        <input onChange={(e) => setPhoneNumber(e.target.value)} required value={phoneNumber} autoComplete='off' className='w-full mb-4 md:mb-3 py-2 px-3 rounded-lg outline-none bg-[#D9D9D9]' type="text" />
                         <p className='font-semibold'>Email Address</p>
                         <input onChange={(e) => setEmail(e.target.value)} required value={email} autoComplete='off' className='w-full mb-4 md:mb-3 py-2 px-3 rounded-lg outline-none bg-[#D9D9D9]' type="email" />
                         <p className='font-semibold'>Password</p>
                         <input onChange={(e) => setPassword(e.target.value)} required value={password} autoComplete='off' className='w-full mb-4 md:mb-3 py-2 px-3 rounded-lg outline-none bg-[#D9D9D9]' type="password" />
                         <p className='font-semibold'>Confirm Password</p>
                         <input onChange={(e) => setConfirmPassword(e.target.value)} required value={confirmPassword} autoComplete='off' className='w-full mb-4 md:mb-3 py-2 px-3 rounded-lg outline-none bg-[#D9D9D9]' type="password" />
-                        <div className='mt-2 mb-2 flex flex-col items-center'>
+                        <div className='mt-5 mb-2 flex flex-col items-center'>
                             {isVerifying ? (
                                 <>
                                     <p>Please verify your email to complete registration.</p>
