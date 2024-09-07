@@ -9,7 +9,7 @@ function Header({openLogout, isOpen, loading}) {
   const {user, userData} = useAuth();
 
   return (
-    <div className='fixed top-0 z-10 bg-secondary w-full p-3 px-5 md:px-7 justify-between flex h-20 lg:drop-shadow-md'>
+    <div className='fixed top-0 z-20 bg-secondary w-full p-3 px-5 md:px-7 justify-between flex h-20 lg:drop-shadow-md'>
         <img className='w-40 md:w-40 object-contain' src={logo} alt="" />
         <div className='flex relative justify-center gap-3 sm:gap-5 lg:gap-7 items-center'>
             <img className='w-10 cursor-pointer hover:bg-[#facdcd] duration-300 p-2 overflow-visible bg-[#FFDEDE] rounded-full' src={search} alt="" />

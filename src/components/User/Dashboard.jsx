@@ -4,6 +4,7 @@ import Header from './Header'
 import LoadingScreen from '../General/LoadingScreen';
 import { AuthContext } from '../General/AuthProvider';
 import { Navigate } from 'react-router-dom';
+import Content from './Content';
 
 function Dashboard() {
   const { user } = useContext(AuthContext);
@@ -22,6 +23,7 @@ function Dashboard() {
     <div className='w-full min-h-screen bg-[#A1E4E4] select-none'>
         {isLoading && <LoadingScreen />}
         <Header openLogout={handleLogoutClick} isOpen={isLogoutOpen} loading={setIsLoading}/>
+        <Content />
         <NavBar />
     </div>
 

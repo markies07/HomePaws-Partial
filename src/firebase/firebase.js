@@ -4,6 +4,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup,
 createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut,
 signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 
 // Your web app's Firebase configuration
@@ -22,7 +23,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
+const storage = getStorage(app);
 
 export { auth, provider, signInWithPopup, createUserWithEmailAndPassword,
   sendEmailVerification, onAuthStateChanged, getAuth, signOut,
-  signInWithEmailAndPassword, sendPasswordResetEmail, db};
+  signInWithEmailAndPassword, sendPasswordResetEmail, db, storage};

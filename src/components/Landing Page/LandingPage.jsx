@@ -4,7 +4,6 @@ import Content from './Content'
 import Footer from './Footer'
 import Login from './Login'
 import CreateAccount from './CreateAccount'
-import AccountForm from './AccountForm'
 import Cards from './Cards'
 import LoginForm from './LoginForm'
 import Dog from './Dogs'
@@ -34,7 +33,6 @@ function LandingPage() {
 
   return (
     <div className='relative min-h-screen flex flex-col select-none'>
-      < AccountForm />
       < Cards />
       < Dog isOpen={isDogOpen} isClose={() => dispatch(closeDog())} onLoginClick={() => dispatch(toggleLogin())}/>
       < CreateAccount createOpen={isCreateOpen} createClose={() => dispatch(closeCreate())} />

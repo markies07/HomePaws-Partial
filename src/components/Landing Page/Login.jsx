@@ -77,7 +77,7 @@ function Login({ isOpen, onClose, handleCreateClick, handleLogin }) {
                 <div className='w-[80%] my-5'>
                     <div className='h-[1.3px] w-full relative bg-[#9e9e9e]'>
                         <div className='absolute -top-3 w-full text-center'>
-                        <p className='text-sm bg-secondary text-[#9e9e9e] font-medium inline-block px-3'>or continue with</p> 
+                            <p className='text-sm bg-secondary text-[#9e9e9e] font-medium inline-block px-3'>or continue with</p> 
                         </div>
                     </div>
                 </div>

@@ -33,7 +33,7 @@ function Logout({isOpen}) {
         style={{
             display: isOpen ? 'block' : 'none',
         }}
-        className='absolute duration-150 font-poppins top-16 lg:top-20 right-0 bg-secondary overflow-hidden rounded-lg text-text shadow-[1px_1px_15px_2px_rgb(0,0,0,.12)]'>
+        className='absolute z-50 duration-150 font-poppins top-16 lg:top-20 right-0 bg-secondary overflow-hidden rounded-lg text-text shadow-[1px_1px_15px_2px_rgb(0,0,0,.12)]'>
             <div className='w-full flex px-7 items-center py-5'>
                 <div className='flex flex-col h-full w-56'>
                     <p className='text-sm opacity-80'>Good day,</p>
