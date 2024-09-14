@@ -82,7 +82,7 @@ function Login({ isOpen, onClose, handleCreateClick, handleLogin }) {
                     </div>
                 </div>
                 <div className='w-[80%] pb-10 flex '>
-                    <button onClick={handleGoogleLogin} className='w-full relative py-2 h-sm:py-3 font-medium rounded-lg border-2 text-text border-[#a8a8a8] hover:bg-[#e9e9e9] bg-[#FAFAFA] duration-150'>Log in with Google
+                    <button onClick={handleGoogleLogin} className='w-full relative py-2 h-sm:py-3 font-medium rounded-lg border-2 text-[#858585] border-[#a8a8a8] hover:bg-[#e9e9e9] bg-[#FAFAFA] duration-150'>Log in with Google
                         <img className='absolute top-[7px] h-sm:top-[11px] left-[14px] w-[25px]' src={google} alt="" />
                     </button>
                 </div>

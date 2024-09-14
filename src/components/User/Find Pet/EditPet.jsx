@@ -1,27 +1,26 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import close from '../../../assets/icons/close-dark.svg'
-import images from './assets/images.svg'
-import { addDoc, collection, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { db, storage } from '../../../firebase/firebase'
 import { notifySuccessOrange, notifyErrorOrange } from '../../General/CustomToast'
 import { getDownloadURL, uploadBytes, ref } from 'firebase/storage'
 import { AuthContext } from '../../General/AuthProvider'
 
-function PostPet({closePostPet}) {
-
+function EditPet({pet, closeEdit}) {
     const { user } = useContext(AuthContext);
+    const fileInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
-        petType: 'Cat',
+        petType: '',
         petName: '',
-        age: 'Kitty/Puppy',
-        gender: 'Male',
-        size: 'Small',
-        color: 'Black',
+        age: '',
+        gender: '',
+        size: '',
+        color: '',
         aboutPet: '',
         ownerName: '',
         ownerAge: '',
-        ownerGender: 'Male',
+        ownerGender: '',
         contactNumber: '',
         location: '',
         adoptionFee: '',
@@ -30,9 +29,27 @@ function PostPet({closePostPet}) {
         timeAndPlace: '',
     });
 
-    const [petImages, setPetImages] = useState([]);
+    const [petImages, setPetImages] = useState(pet.petImages || []);
+    const [newPetImages, setNewPetImages] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
+    const petID = pet.petID;
+
+    useEffect(() => {
+        const fetchPetData = async () => {
+            const petDocRef = doc(db, 'petsForAdoption', petID);
+            const petDoc = await getDoc(petDocRef);
+
+            if(petDoc.exists()) {
+                setFormData(petDoc.data());
+                setPetImages(petDoc.data().petImages || []);
+            }
+            else{
+                console.error('No such document exists!');
+            }
+        }
+        fetchPetData();
+    }, [petID]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -41,116 +58,81 @@ function PostPet({closePostPet}) {
         if (errors[name]) {
             setErrors({ ...errors, [name]: '' });
         }
-    }
+    };
 
     const handleImageChange = (e) => {
-        const files = Array.from(e.target.files);
-        setPetImages(files.slice(0, 3));
+        const files = Array.from(e.target.files);  // Get selected files
+        setNewPetImages(files.slice(0, 3));  // Limit to 3 images
+    };
 
-        if (errors.petImages) {
-          setErrors({ ...errors, petImages: '' });
-        }
-    }
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Form submission started');
-        
-
         setIsSubmitting(true);
-        try{
-            console.log('Uploading images...');
-            const imageUrls = await Promise.all(
-                petImages.map(async (image, index) => {
-                    console.log(`Uploading image ${index + 1}...`);
-                    const imageRef = ref(storage, `pet-images/${Date.now()}-${image.name}`);
-                    await uploadBytes(imageRef, image);
-                    const url = await getDownloadURL(imageRef);
-                    console.log(`Image ${index + 1} uploaded successfully`);
-                    return url;
-                })
-            );
-            console.log('All images uploaded successfully');
 
-            console.log('Adding document to Firestore...');
-            const docRef = await addDoc(collection(db, 'petsForAdoption'), {
+        try {
+            let imageUrls = formData.petImages || []; // Existing images
+
+            if (newPetImages.length > 0) {
+                // Upload new images if they were selected
+                imageUrls = await Promise.all(
+                    newPetImages.map(async (image, index) => {
+                        const imageRef = ref(storage, `pet-images/${Date.now()}-${image.name}`);
+                        await uploadBytes(imageRef, image);
+                        const url = await getDownloadURL(imageRef);
+                        return url;
+                    })
+                );
+            }
+
+            const petDocRef = doc(db, 'petsForAdoption', petID);
+            await updateDoc(petDocRef, {
                 ...formData,
-                petImages: imageUrls,
-                petID: '',
-                timePosted: serverTimestamp(),
-                userID: user.uid,
-                status: 'For Adoption',
+                petImages: imageUrls
             });
 
-            await updateDoc(docRef, {
-                petID: docRef.id
-            });
-            console.log('Document written with ID: ', docRef.id);
-            notifySuccessOrange('Pet posted successfully!');
-
-            setFormData({
-                petType: 'Cat',
-                petName: '',
-                age: 'Kitty/Puppy',
-                gender: 'Male',
-                size: 'Small',
-                color: 'Black',
-                aboutPet: '',
-                ownerName: '',
-                ownerAge: '',
-                ownerGender: 'Male',
-                contactNumber: '',
-                location: '',
-                adoptionFee: '',
-                goodWithKids: '',
-                goodWithAnimals: '',
-                timeAndPlace: '',
-            });
-            setPetImages([]);
-        }
-        catch (error) {
-            console.error("Error adding document: ", error);
-            notifyErrorOrange('An error occured. Please try again.');
-        }
-        finally {
+            notifySuccessOrange('Pet information updated successfully!');
             setTimeout(() => {
                 window.location.reload();
             }, 2500);
+        } catch (error) {
+            console.error('Error updating document: ', error);
+            notifyErrorOrange('An error occurred. Please try again.');
+        } finally {
             setIsSubmitting(false);
-            console.log('Form submission completed');
         }
     };
 
+    const handleButtonClick = () => {
+        // Programmatically trigger the file input when button is clicked
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
 
     return (
         <div className='w-full h-full lg:pb-4 mt-4'>
             <div className='relative px-4 pb-5 bg-secondary lg:rounded-lg shadow-custom w-full h-full'>
-                <img onClick={closePostPet} className='absolute border-2 border-secondary hover:border-text duration-150 cursor-pointer p-1 top-3 right-3' src={close} alt="" />
-                <p className='text-center font-medium text-3xl pt-12'>Post Pet for Adoption</p>
+                <img onClick={closeEdit} className='absolute border-2 border-secondary hover:border-text duration-150 cursor-pointer p-1 top-3 right-3' src={close} alt="" />
+                <p className='text-center font-medium text-3xl pt-12'>Edit Pet Information</p>
                 <div className='max-w-[35rem] pb-5 mx-auto flex pt-5 gap-3 sm:gap-5 xl:gap-7'>
-                    {petImages.length > 0 ? petImages.map((image, index) => (
+                    {newPetImages.length > 0 ? newPetImages.map((file, index) => (
                         <div key={index} className='bg-[#BCBCBC] rounded-md h-44 sm:h-48 w-full flex justify-center'>
-                            <img src={URL.createObjectURL(image)} alt={`Uploaded ${index + 1}`} className='object-cover w-full h-full rounded-md' />
+                            <img src={URL.createObjectURL(file)} alt={`Preview ${index + 1}`} className='object-cover w-full h-full rounded-md' />
                         </div>
-                    )) : (
-                        <>
-                            <div className='bg-[#BCBCBC] rounded-md h-44 sm:h-48 w-full flex justify-center'>
-                                <img className='w-12 lg:w-14' src={images} alt="" />
-                            </div>
-                            <div className='bg-[#BCBCBC] rounded-md h-44 sm:h-48 w-full flex justify-center'>
-                                <img className='w-12 lg:w-14' src={images} alt="" />
-                            </div>
-                            <div className='bg-[#BCBCBC] rounded-md h-44 sm:h-48 w-full flex justify-center'>
-                                <img className='w-12 lg:w-14' src={images} alt="" />
-                            </div>
-                        </>
-                    )}
+                    )) 
+                    : petImages.map((image, index) => (
+                        <div key={index} className='bg-[#BCBCBC] rounded-md overflow-hidden h-44 sm:h-48 w-full flex justify-center'>
+                            <img src={image} alt={`Existing Image ${index + 1}`}  className='w-full object-cover' />
+                        </div>
+                    ))
+                    }
                 </div>
                 {/* FORM */}
                 <form onSubmit={handleSubmit} className='max-w-[40rem] flex flex-col xl:max-w-[45rem] mx-auto'>
                     {/* PET IMAGES INPUT */}
-                    <button type='button' onClick={() => document.getElementById('images').click()} className='bg-[#BCBCBC] hover:bg-[#cccccc] px-5 py-2 font-medium mx-auto text-sm rounded-md duration-150'>Upload Images</button>
-                    <input id="images" type="file" accept="image/*" multiple onChange={handleImageChange} style={{display: 'none'}}/>
+                    <input id="images" ref={fileInputRef} name='petImages' type="file" accept="image/*" multiple onChange={handleImageChange} className='hidden'/>
+                    <button type='button' onClick={handleButtonClick} className='bg-[#BCBCBC] hover:bg-[#cccccc] px-5 py-2 font-medium mx-auto text-sm rounded-md duration-150'>Upload Images</button>
                     {/* PET INFO */}
                     <div className='flex flex-col my-5'>
                         <p className='font-semibold'>Pet Type</p>
@@ -274,7 +256,7 @@ function PostPet({closePostPet}) {
                         </div>
                     </div>
                     <div className='w-full flex pb-5 justify-center'>
-                        <button type='submit' disabled={isSubmitting} className='text-center bg-primary hover:bg-primaryHover px-5 py-2 rounded-md font-medium text-white'>{isSubmitting ? 'POSTING...' : 'POST'}</button>
+                        <button type='submit' disabled={isSubmitting} className='text-center bg-primary hover:bg-primaryHover px-5 py-2 rounded-md font-medium text-white'>{isSubmitting ? 'EDITING...' : 'EDIT PET'}</button>
                     </div>
                 </form>
             </div>
@@ -282,4 +264,4 @@ function PostPet({closePostPet}) {
     )
 }
 
-export default PostPet
+export default EditPet

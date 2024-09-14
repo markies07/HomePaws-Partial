@@ -3,23 +3,18 @@ import logout from './assets/logout.svg'
 import paw from '../../assets/images/white-paws.png'
 import { signOut } from 'firebase/auth'
 import { auth } from '../../firebase/firebase'
-import { useNavigate } from 'react-router-dom'
-import { notifyErrorOrange, notifySuccessOrange } from '../General/CustomToast'
+import { notifyErrorOrange } from '../General/CustomToast'
 import { useAuth } from '../General/AuthProvider'
 
 
 function Logout({isOpen}) {
-    const navigate = useNavigate();
     const {user, userData} = useAuth();
 
     const handleLogout = async () => {
 
         try{
             await signOut(auth);
-            notifySuccessOrange("Logout successful!");
-            setTimeout(() => {
-                navigate('/');
-            }, 3000);
+            window.location.reload();
             
         }
         catch (error){
@@ -35,7 +30,7 @@ function Logout({isOpen}) {
         }}
         className='absolute z-50 duration-150 font-poppins top-16 lg:top-20 right-0 bg-secondary overflow-hidden rounded-lg text-text shadow-[1px_1px_15px_2px_rgb(0,0,0,.12)]'>
             <div className='w-full flex px-7 items-center py-5'>
-                <div className='flex flex-col h-full w-56'>
+                <div className='flex flex-col h-full w-48'>
                     <p className='text-sm opacity-80'>Good day,</p>
                     <p className='text-2xl font-medium'>{user ? userData?.fullName : 'Guess'}</p>    
                 </div>
