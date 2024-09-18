@@ -13,6 +13,7 @@ function FindPet() {
   const [selectedPet, setSelectedPet] = useState(null);
 
   const [filters, setFilters] = useState({
+    breed: 'Any',
     age: 'Any',
     gender: 'Any',
     size: 'Any',

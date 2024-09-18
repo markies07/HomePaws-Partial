@@ -44,7 +44,7 @@ function Content({ onLoginClick, openDog }) {
           <AnimalCard onLoginClick={onLoginClick}/>
           <div className='w-full max-w-48 relative m-auto items-center justify-between h-64 bg-primary flex flex-col drop-shadow-lg rounded-xl overflow-hidden'>
             <img className='w-32 pt-4' src={logo} alt="" />
-            <p className='text-white text-sm px-3 text-center'>3 more pets available on HomePaws</p>
+            <p className='text-white text-sm px-2 text-center'>3 more pets available on HomePaws</p>
             <p onClick={onLoginClick} className='text-white hover:bg-[#ff6c6c] duration-150 cursor-pointer font-medium w-full flex justify-center items-center border-t-[1px] border-white h-11'>MEET THEM</p>
           </div>
         </div>

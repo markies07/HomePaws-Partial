@@ -25,6 +25,7 @@ function AdoptionForm() {
         reasonForAdopting: '',
         experienceWithPets: '',
         typeOfResidence: 'House',
+        occupation: '',
         commitment: '', 
     });
 
@@ -39,7 +40,6 @@ function AdoptionForm() {
         if (pet && userData) {
           setFormData((prevData) => ({
             ...prevData,
-            adopterName: userData.fullName,
             petName: pet.petName,
             emailAddress: userData.email,
             petID: pet.petID,
@@ -108,7 +108,7 @@ function AdoptionForm() {
                 <form onSubmit={handleSubmit} className='w-full flex flex-col max-w-[35rem] xl:max-w-[40rem] mx-auto'>
                     <div className='w-48 lg:w-60'>
                         <p className='font-semibold'>Pet Name</p>
-                        <input name="petName" value={formData.petName} disabled className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
+                        <input name="petName" value={formData.petName || ''} disabled className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
                     </div>
                     <div className='w-full my-5'>
                         <div className='h-[2px] w-full relative bg-text'></div>
@@ -119,21 +119,21 @@ function AdoptionForm() {
                     <div className='w-full flex gap-2 pb-4'>
                         <div className='w-full'>
                             <p className='font-semibold'>Full Name</p>
-                            <input disabled name="fullName" value={formData.adopterName} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
+                            <input name="fullName" onChange={handleChange} value={formData.adopterName || ''} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
                         </div>
                     </div>
                     <div className='w-full flex gap-2 pb-4'>
                         <div className='w-20 shrink-0'>
                             <p className='font-semibold'>Age</p>
-                            <input required name="age" value={formData.age} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="number" id="" />
+                            <input required name="age" value={formData.age || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="number" id="" />
                         </div>
                         <div className='w-[45%]'>
                             <p className='font-semibold'>Date of Birth</p>
-                            <input required name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange} className='py-[3px] bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="date" />
+                            <input required name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleChange} className='py-[3px] bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="date" />
                         </div>
                         <div className='w-full'>
                             <p className='font-semibold'>Gender</p>
-                            <select name="gender" value={formData.gender} onChange={handleChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
+                            <select name="gender" value={formData.gender || ''} onChange={handleChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
                                 <option className="text-text py-2" value="Male">Male</option>
                                 <option className="text-text py-2" value="Female">Female</option>
                             </select>
@@ -142,17 +142,17 @@ function AdoptionForm() {
                     <div className='w-full flex gap-2 pb-4'>
                         <div className='w-80'>
                             <p className='font-semibold'>Contact Number</p>
-                            <input required name="contactNumber" value={formData.contactNumber} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="number" id="" />
+                            <input required name="contactNumber" value={formData.contactNumber || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="number" id="" />
                         </div>
                         <div className='w-full'>
                             <p className='font-semibold'>Email Address</p>
-                            <input required disabled name="emailAddress" value={formData.emailAddress} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
+                            <input required disabled name="emailAddress" value={formData.emailAddress || ''} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
                         </div>
                     </div>
                     <div className='w-full flex gap-2 pb-4'>
                         <div className='w-full'>
                             <p className='font-semibold'>Full Address</p>
-                            <input required name="fullAddress" value={formData.fullAddress} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
+                            <input required name="fullAddress" value={formData.fullAddress || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
                         </div>
                     </div>
                     <div className='w-full my-5'>
@@ -164,28 +164,34 @@ function AdoptionForm() {
                     <div className='w-full flex gap-2 pb-4'>
                         <div className='w-full'>
                             <p className='font-semibold'>Reason for adopting</p>
-                            <input required name="reasonForAdopting" value={formData.reasonForAdopting} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
+                            <input required name="reasonForAdopting" value={formData.reasonForAdopting || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
                         </div>
                     </div>
                     <div className='w-full flex gap-2 pb-4'>
-                        <div className='w-[55%]'>
+                        <div className='w-full'>
                             <p className='font-semibold'>Experience with pets</p>
-                            <input required name="experienceWithPets" value={formData.experienceWithPets} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
+                            <input required name="experienceWithPets" value={formData.experienceWithPets || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
                         </div>
-                        <div className='w-[45%]'>
+                    </div>
+                    <div className='w-full flex gap-2 pb-4'>
+                        <div className='w-[50%]'>
                             <p className='font-semibold'>Type of residence</p>
-                            <select name="typeOfResidence" value={formData.typeOfResidence} onChange={handleChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
+                            <select name="typeOfResidence" value={formData.typeOfResidence || ''} onChange={handleChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
                                 <option className="text-text py-2" value="House">House</option>
                                 <option className="text-text py-2" value="Apartment">Apartment</option>
                                 <option className="text-text py-2" value="Condo">Condo</option>
                                 <option className="text-text py-2" value="Townhouse">Townhouse</option>
                             </select>
                         </div>
+                        <div className='w-[50%]'>
+                            <p className='font-semibold'>Occupation</p>
+                            <input required name="experienceWithPets" value={formData.occupation || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
+                        </div>
                     </div>
                     <div className='w-full flex gap-2 pb-4'>
                         <div className='w-full'>
                             <p className='font-semibold'>Commitment to taking care of the pet</p>
-                            <textarea required name="commitment" value={formData.commitment} onChange={handleChange} className='py-1 w-full h-20 px-2 border-2 border-text rounded-md' placeholder='(e.g., Work schedule, who will care for the pet)'></textarea>
+                            <textarea required name="commitment" value={formData.commitment || ''} onChange={handleChange} className='py-1 w-full h-20 px-2 border-2 border-text rounded-md' placeholder='(e.g., Work schedule, who will care for the pet)'></textarea>
                         </div>
                     </div>
                     <div className='flex justify-center py-3'>

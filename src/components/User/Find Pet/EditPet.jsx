@@ -12,6 +12,7 @@ function EditPet({pet, closeEdit}) {
 
     const [formData, setFormData] = useState({
         petType: '',
+        breed: '',
         petName: '',
         age: '',
         gender: '',
@@ -134,12 +135,31 @@ function EditPet({pet, closeEdit}) {
                     <input id="images" ref={fileInputRef} name='petImages' type="file" accept="image/*" multiple onChange={handleImageChange} className='hidden'/>
                     <button type='button' onClick={handleButtonClick} className='bg-[#BCBCBC] hover:bg-[#cccccc] px-5 py-2 font-medium mx-auto text-sm rounded-md duration-150'>Upload Images</button>
                     {/* PET INFO */}
-                    <div className='flex flex-col my-5'>
-                        <p className='font-semibold'>Pet Type</p>
-                        <select name="petType" value={formData.petType} onChange={handleInputChange} className="border-text rounded-md sm:text-base w-32 py-1 px-1 outline-none font-medium text-text border-2">
-                            <option className="text-text py-2" value="Cat">Cat</option>
-                            <option className="text-text py-2" value="Dog">Dog</option>
-                        </select>
+
+                    <div className='flex my-5 gap-3'>
+                        <div className='w-24'>
+                            <p className='font-semibold'>Pet Type</p>
+                            <select name="petType" value={formData.petType} onChange={handleInputChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
+                                <option className="text-text py-2" value="Cat">Cat</option>
+                                <option className="text-text py-2" value="Dog">Dog</option>
+                            </select>
+                        </div>
+                        <div className='w-48'>
+                            <p className='font-semibold'>Breed</p>
+                            <select name="breed" value={formData.breed} onChange={handleInputChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
+                                <option className="text-text py-2" value="Puspin">Puspin</option>
+                                <option className="text-text py-2" value="Aspin">Aspin</option>
+                                <option className="text-text py-2" value="German Shepherd">German Shepherd</option>
+                                <option className="text-text py-2" value="Golden Retriever">Golden Retriever</option>
+                                <option className="text-text py-2" value="Persian">Persian</option>
+                                <option className="text-text py-2" value="Pomeranian">Pomeranian</option>
+                                <option className="text-text py-2" value="Ragdol">Ragdol</option>
+                                <option className="text-text py-2" value="Shih Tzu">Shih Tzu</option>
+                                <option className="text-text py-2" value="Siamese">Siamese</option>
+                                <option className="text-text py-2" value="Siberian Husky">Siberian Husky</option>
+                                <option className="text-text py-2" value="Other">Other</option>
+                            </select>
+                        </div>
                     </div>
                     <div className='flex flex-col xl:flex-row xl:gap-3'>
                         <div className='flex w-full items-center mb-5 gap-3'>

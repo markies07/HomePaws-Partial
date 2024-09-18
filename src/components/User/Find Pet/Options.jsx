@@ -14,6 +14,7 @@ function Options({openPostPet, changeFilter, selected, onFilterChange, filters})
   }
 
   const filterOptions = {
+    breed: ['Any', 'Puspin', 'Aspin', 'German Shepherd', 'Golden Retriever', 'Persian', 'Pomeranian', 'Ragdol', 'Shi Tzu', 'Siamese', 'Siberian Husky', 'Other'],
     age: ['Any', 'Puppy/Kitten', 'Young', 'Adult', 'Senior'],
     gender: ['Any', 'Male', 'Female'],
     size: ['Any', 'Small', 'Medium', 'Large'],

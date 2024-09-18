@@ -42,7 +42,7 @@ function NavBar() {
         {/* CHAT */}
         <NavLink to="/dashboard/chat" className={({ isActive }) => isActive ? 'py-2 bg-primary cursor-pointer duration-150 px-3 rounded-md' : 'py-2 hover:bg-[#D9D9D9] cursor-pointer duration-150 px-3 rounded-md'}>
           {({isActive}) => (
-            <img src={isActive ? activechat : chat} alt="Paw Icon" />
+            <img className='w-[30px]' src={isActive ? activechat : chat} alt="Paw Icon" />
           )}
         </NavLink>
 

@@ -49,7 +49,7 @@ function Login({ isOpen, onClose, handleCreateClick, handleLogin }) {
         }
     }
 
-    
+     
     return (
         <div style={{
                 right: isOpen ? '0' : '-50rem',

@@ -13,6 +13,7 @@ function PostPet({closePostPet}) {
 
     const [formData, setFormData] = useState({
         petType: 'Cat',
+        breed: 'Puspin',
         petName: '',
         age: 'Kitty/Puppy',
         gender: 'Male',
@@ -36,12 +37,18 @@ function PostPet({closePostPet}) {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-
+        let updatedValue = value;
+    
+        if (name === 'petName') {
+            updatedValue = value.replace(/\b\w/g, char => char.toUpperCase());
+        }
+    
+        setFormData({ ...formData, [name]: updatedValue });
+    
         if (errors[name]) {
             setErrors({ ...errors, [name]: '' });
         }
-    }
+    };
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
@@ -90,6 +97,7 @@ function PostPet({closePostPet}) {
 
             setFormData({
                 petType: 'Cat',
+                breed: 'Puspin',
                 petName: '',
                 age: 'Kitty/Puppy',
                 gender: 'Male',
@@ -123,7 +131,7 @@ function PostPet({closePostPet}) {
 
 
     return (
-        <div className='w-full h-full lg:pb-4 mt-4'>
+        <div className='w-full h-full lg:pb-4 my-4'>
             <div className='relative px-4 pb-5 bg-secondary lg:rounded-lg shadow-custom w-full h-full'>
                 <img onClick={closePostPet} className='absolute border-2 border-secondary hover:border-text duration-150 cursor-pointer p-1 top-3 right-3' src={close} alt="" />
                 <p className='text-center font-medium text-3xl pt-12'>Post Pet for Adoption</p>
@@ -152,18 +160,36 @@ function PostPet({closePostPet}) {
                     <button type='button' onClick={() => document.getElementById('images').click()} className='bg-[#BCBCBC] hover:bg-[#cccccc] px-5 py-2 font-medium mx-auto text-sm rounded-md duration-150'>Upload Images</button>
                     <input id="images" type="file" accept="image/*" multiple onChange={handleImageChange} style={{display: 'none'}}/>
                     {/* PET INFO */}
-                    <div className='flex flex-col my-5'>
-                        <p className='font-semibold'>Pet Type</p>
-                        <select name="petType" value={formData.petType} onChange={handleInputChange} className="border-text rounded-md sm:text-base w-32 py-1 px-1 outline-none font-medium text-text border-2">
-                            <option className="text-text py-2" value="Cat">Cat</option>
-                            <option className="text-text py-2" value="Dog">Dog</option>
-                        </select>
+                    <div className='flex my-5 gap-3'>
+                        <div className='w-24'>
+                            <p className='font-semibold'>Pet Type</p>
+                            <select name="petType" value={formData.petType} onChange={handleInputChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
+                                <option className="text-text py-2" value="Cat">Cat</option>
+                                <option className="text-text py-2" value="Dog">Dog</option>
+                            </select>
+                        </div>
+                        <div className='w-48'>
+                            <p className='font-semibold'>Breed</p>
+                            <select name="breed" value={formData.breed} onChange={handleInputChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
+                                <option className="text-text py-2" value="Puspin">Puspin</option>
+                                <option className="text-text py-2" value="Aspin">Aspin</option>
+                                <option className="text-text py-2" value="German Shepherd">German Shepherd</option>
+                                <option className="text-text py-2" value="Golden Retriever">Golden Retriever</option>
+                                <option className="text-text py-2" value="Persian">Persian</option>
+                                <option className="text-text py-2" value="Pomeranian">Pomeranian</option>
+                                <option className="text-text py-2" value="Ragdol">Ragdol</option>
+                                <option className="text-text py-2" value="Shih Tzu">Shih Tzu</option>
+                                <option className="text-text py-2" value="Siamese">Siamese</option>
+                                <option className="text-text py-2" value="Siberian Husky">Siberian Husky</option>
+                                <option className="text-text py-2" value="Other">Other</option>
+                            </select>
+                        </div>
                     </div>
                     <div className='flex flex-col xl:flex-row xl:gap-3'>
                         <div className='flex w-full items-center mb-5 gap-3'>
                             <div className='w-[60%]'>
                                 <p className='font-semibold'>Pet Name</p>
-                                <input required name="petName" value={formData.petName} onChange={handleInputChange} className='py-1 w-full px-2 border-2 border-text rounded-md' type="text" id="" />
+                                <input required name="petName" value={formData.petName} onChange={handleInputChange} className='py-1 outline-none capitalize w-full px-2 border-2 border-text rounded-md' type="text" id="" />
                             </div>
                             <div className='flex flex-col w-[40%]'>
                                 <p className='font-semibold'>Age</p>
@@ -207,7 +233,7 @@ function PostPet({closePostPet}) {
                     <div className='flex items-center mb-5 gap-3'>
                         <div className='w-full'>
                             <p className='font-semibold'>About the pet</p>
-                            <textarea required name="aboutPet" value={formData.aboutPet} onChange={handleInputChange} className='py-1 w-full h-40 px-2 border-2 border-text rounded-md' placeholder='(e.g., pet health condition, pet behavior)'></textarea>
+                            <textarea required name="aboutPet" value={formData.aboutPet} onChange={handleInputChange} className='py-1 outline-none w-full h-40 px-2 border-2 border-text rounded-md' placeholder='(e.g., pet health condition, pet behavior)'></textarea>
                         </div>
                     </div>
                     <div className='w-full my-5'>
@@ -221,11 +247,11 @@ function PostPet({closePostPet}) {
                             <div className='flex w-full gap-3 pb-5 xl:pb-3'>
                                 <div className='w-[75%]'>
                                     <p className='font-semibold'>Full Name</p>
-                                    <input name="ownerName" value={formData.ownerName} onChange={handleInputChange} required className='py-1 w-full px-2 border-2 border-text rounded-md' type="text" />
+                                    <input name="ownerName" value={formData.ownerName} onChange={handleInputChange} required className='py-1 outline-none capitalize w-full px-2 border-2 border-text rounded-md' type="text" />
                                 </div>
                                 <div className='flex flex-col w-[25%]'>
                                     <p className='font-semibold'>Age</p>
-                                    <input name="ownerAge" value={formData.ownerAge} onChange={handleInputChange} required className='py-1 w-full px-2 border-2 border-text rounded-md' type="number" />
+                                    <input name="ownerAge" value={formData.ownerAge} onChange={handleInputChange} required className='py-1 outline-none w-full px-2 border-2 border-text rounded-md' type="number" />
                                 </div>
                             </div>
                             <div className='flex w-full gap-3 pb-2'>
@@ -238,13 +264,13 @@ function PostPet({closePostPet}) {
                                 </div>
                                 <div className='flex flex-col w-[60%]'>
                                     <p className='font-semibold'>Contact No.</p>
-                                    <input required name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} className='py-1 w-full px-2 border-2 border-text rounded-md' type="number" />
+                                    <input required name="contactNumber" value={formData.contactNumber} onChange={handleInputChange} className='py-1 outline-none w-full px-2 border-2 border-text rounded-md' type="number" />
                                 </div>
                             </div>
                         </div>
                         <div className='w-full gap-3 pb-2'>
                             <p className='font-semibold'>Location</p>
-                            <input name="location" value={formData.location} onChange={handleInputChange} required className='py-1 w-full px-2 border-2 border-text rounded-md' type="text" />
+                            <input name="location" value={formData.location} onChange={handleInputChange} required className='py-1 outline-none w-full px-2 border-2 border-text rounded-md' type="text" />
                         </div>
                     </div>
                     <div className='w-full my-5'>
@@ -257,19 +283,19 @@ function PostPet({closePostPet}) {
                         <div className='flex flex-col xl:gap-3'>
                             <div className='w-full gap-3 pb-5 xl:pb-3'>
                                 <p className='font-semibold'>How much the adoption fee for the pet?</p>
-                                <input name="adoptionFee" value={formData.adoptionFee} onChange={handleInputChange} required className='py-1 w-full px-2 border-2 border-text rounded-md' type="text" />
+                                <input name="adoptionFee" value={formData.adoptionFee} onChange={handleInputChange} required className='py-1 outline-none w-full px-2 border-2 border-text rounded-md' type="text" />
                             </div>
                             <div className='w-full gap-3 pb-5 xl:pb-3'>
                                 <p className='font-semibold'>Is the pet good with kids?</p>
-                                <input name="goodWithKids" value={formData.goodWithKids} onChange={handleInputChange} required className='py-1 w-full px-2 border-2 border-text rounded-md' type="text" />
+                                <input name="goodWithKids" value={formData.goodWithKids} onChange={handleInputChange} required className='py-1 outline-none w-full px-2 border-2 border-text rounded-md' type="text" />
                             </div>
                             <div className='w-full gap-3 pb-5 xl:pb-3'>
                                 <p className='font-semibold'>Is the pet good with other animals?</p>
-                                <input name="goodWithAnimals" value={formData.goodWithAnimals} onChange={handleInputChange} required className='py-1 w-full px-2 border-2 border-text rounded-md' type="text" />
+                                <input name="goodWithAnimals" value={formData.goodWithAnimals} onChange={handleInputChange} required className='py-1 outline-none w-full px-2 border-2 border-text rounded-md' type="text" />
                             </div>
                             <div className='w-full gap-3 pb-5 xl:pb-3'>
                                 <p className='font-semibold'>When and where can I adopt the pet?</p>
-                                <input name="timeAndPlace" value={formData.timeAndPlace} onChange={handleInputChange} required className='py-1 w-full px-2 border-2 border-text rounded-md' type="text" />
+                                <input name="timeAndPlace" value={formData.timeAndPlace} onChange={handleInputChange} required className='py-1 outline-none w-full px-2 border-2 border-text rounded-md' type="text" />
                             </div>
                         </div>
                     </div>
