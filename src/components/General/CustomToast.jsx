@@ -5,7 +5,7 @@ import '../../index.css'; // Your custom styles
 // ORANGE BACKGROUND
 export const notifySuccessOrange = (message) => {
   toast.success(message, {
-    className: 'orange-bg',
+    className: 'green-bg',
     bodyClassName: 'custom-toast-body',
   });
 };

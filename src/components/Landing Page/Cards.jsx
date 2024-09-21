@@ -10,7 +10,7 @@ function Cards() {
                 <img src={close} alt="" />
             </div>
             <h1 className='text-3xl font-semibold text-primary'>
-                Dogs for Adoption
+                Dogs for Adoptionfdsfsdf
             </h1>
             <div className='inline-flex mt-10 justify-center sm:justify-start gap-3 flex-wrap'>
                 <AnimalCard />

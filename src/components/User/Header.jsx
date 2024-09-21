@@ -3,6 +3,7 @@ import logo from '../../assets/images/white-logo.png'
 import search from './assets/search-icon.svg'
 import Logout from './Logout'
 import { useAuth } from '../General/AuthProvider'
+import defaultPic from '../../assets/icons/default-profile.svg'
 
 function Header({openLogout, isOpen, loading}) {
   const {user, userData} = useAuth();

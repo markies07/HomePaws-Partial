@@ -80,7 +80,7 @@ function Comments({closeComment, postID, handleComment}) {
     
   return (
     <div className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-20">
-        <div className="relative bg-[#E9E9E9] w-[90%] sm:w-[30rem] h-[65%] rounded-lg py-3 flex flex-col">
+        <div className="relative bg-[#d8d8d8] w-[90%] sm:w-[30rem] h-[65%] rounded-lg py-3 flex flex-col">
             <img onClick={closeComment} className='w-9 p-1 border-2 border-transparent hover:border-text duration-150 absolute top-2 right-2 cursor-pointer' src={close} alt="" />
             <h1 className='text-center shrink-0 text-2xl font-semibold pt-5 mb-4'>Comments</h1>
 
@@ -117,9 +117,11 @@ function Comments({closeComment, postID, handleComment}) {
             {/* POSTING COMMENT */}
             <form onSubmit={submitComment} className='mt-3 flex items-center gap-2 px-3 sm:px-5'>
                 <input required value={commentText} onChange={(e) => setCommentText(e.target.value)} className='bg-secondary w-full rounded-full px-4 pt-3 pb-2 outline-none' placeholder='Write a comment.' type="text" />
-                <button className='w-11 h-12 shrink-0' type='submit'>
-                    <img className='w-12 h-11 p-2 pt-3 cursor-pointer overflow-visible bg-primary rounded-full hover:bg-primaryHover duration-200' src={postComment} alt="" />
-                </button>
+                {commentText.trim() && (
+                    <button className='w-11 h-12 shrink-0' type='submit' aria-hidden="true">
+                        <img className='w-12 h-11 p-2 pt-3 cursor-pointer overflow-visible bg-primary rounded-full hover:bg-primaryHover duration-200' src={postComment} alt="" />
+                    </button>
+                )}
             </form>
         </div>
     </div>

@@ -20,6 +20,14 @@
     z-index: 9999 !important;
   }
 
+  .green-bg{
+    background-color: #85B728;
+    color: #ffffff;
+    font-family: 'Poppins';
+    border-radius: 8px;
+    z-index: 9999 !important;
+  }
+
   .white-bg {
     background-color: #FAFAFA;
     color: #F75959;
@@ -29,6 +37,10 @@
   }
 
   .orange-bg .Toastify__toast-icon svg {
+    fill: #FAFAFA; 
+  }
+
+  .green-bg .Toastify__toast-icon svg {
     fill: #FAFAFA; 
   }
 
