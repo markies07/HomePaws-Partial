@@ -123,15 +123,15 @@ function AdoptionForm() {
                         </div>
                     </div>
                     <div className='w-full flex gap-2 pb-4'>
-                        <div className='w-20 shrink-0'>
+                        <div className='w-[20%] shrink-0'>
                             <p className='font-semibold'>Age</p>
                             <input required name="age" value={formData.age || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="number" id="" />
                         </div>
-                        <div className='w-[45%]'>
+                        <div className='w-[45%] shrink-0'>
                             <p className='font-semibold'>Date of Birth</p>
                             <input required name="dateOfBirth" value={formData.dateOfBirth || ''} onChange={handleChange} className='py-[3px] bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="date" />
                         </div>
-                        <div className='w-full'>
+                        <div className='w-[35%]'>
                             <p className='font-semibold'>Gender</p>
                             <select name="gender" value={formData.gender || ''} onChange={handleChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
                                 <option className="text-text py-2" value="Male">Male</option>

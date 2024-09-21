@@ -12,7 +12,7 @@ function Header({openLogout, isOpen, loading}) {
         <img className='w-36 sm:w-40 object-contain -ml-1 sm:ml-0' src={logo} alt="" />
         <div className='flex relative justify-center gap-3 sm:gap-5 lg:gap-7 items-center'>
             <img className='w-10 cursor-pointer hover:bg-[#facdcd] duration-300 p-2 overflow-visible bg-[#FFDEDE] rounded-full' src={search} alt="" />
-            <img onClick={openLogout} className='w-12 border-2 border-secondary hover:border-primary duration-150 cursor-pointer lg:ml-3 rounded-full' src={userData?.profilePictureURL} alt="" />
+            <img onClick={openLogout} className='w-12 h-12 bg-text border-2 border-secondary hover:border-primary duration-150 cursor-pointer lg:ml-3 rounded-full' src={userData?.profilePictureURL} alt="HAHAH" />
             <Logout isOpen={isOpen} loading={loading} />
         </div>
     </div>

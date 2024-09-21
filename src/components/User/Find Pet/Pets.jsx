@@ -18,7 +18,7 @@ function Pets({pets}) {
                     </div>
                 ))
             ) : (
-                <p className='text-center col-span-full text-xl font-medium text-text'>Sorry, no available pets for adoption right now.</p>
+                <p className='text-center col-span-full text-xl font-medium text-text'>No available pets.</p>
             )}
         </div>
     )

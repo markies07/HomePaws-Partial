@@ -1,13 +1,53 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import unlike from './assets/unlike.svg'
 import like from './assets/like.svg'
 import comment from './assets/comment.svg'
 import message from './assets/message.svg'
 import { useUserPosts } from '../../General/UserPostsContext'
+import { AuthContext } from '../../General/AuthProvider'
+import { useLikesAndComments } from '../../General/LikesAndCommentsContext'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../../../firebase/firebase'
+import Comments from './Comments'
 
 
 function Posts() {
+    const { user } = useContext(AuthContext);
     const { posts, loading } = useUserPosts();
+    const { handleLike, handleUnlike, handleComment } = useLikesAndComments();
+    
+    const [likedPosts, setLikedPosts] = useState({});
+    const [isCommentOpen, setIsCommentOpen] = useState(false);
+    const [selectedPost, setSelectedPost] = useState(null);
+
+
+    // FETCHING THE STATE OF LIKE POSTS
+    useEffect(() => {
+        if(posts.length > 0){
+            posts.forEach(async (post) => {
+                const postRef = doc(db, 'likes', `${user.uid}_${post.id}`);
+                const postSnap = await getDoc(postRef);
+
+                if(postSnap.exists()){
+                    setLikedPosts((prev) => ({ ...prev, [post.id]: true }));
+                }
+            });
+        }
+    }, [posts, user.uid]);
+
+
+    const toggleLike = (postID) => {
+        const isLiked = likedPosts[postID];
+
+        if (isLiked) {
+            handleUnlike(postID, user.uid);
+            setLikedPosts({ ...likedPosts, [postID]: false});
+
+        } else {
+            handleLike(postID, user.uid);
+            setLikedPosts({ ...likedPosts, [postID]: true});
+        }
+    };
 
     const getTimeDifference = (timestamp) => {
         const now = new Date();
@@ -37,69 +77,88 @@ function Posts() {
         }
       };
 
+    const openComment = (postID) => {
+        setIsCommentOpen(!isCommentOpen);
+        setSelectedPost(postID)
+    }
+    const closeComment = (postID) => {
+        setIsCommentOpen(!isCommentOpen);
+        setSelectedPost(null)
+    }
+
     return (
         <>
             {posts.length === 0 ? (
                 <div className='py-3 text-center bg-secondary rounded-md shadow-custom font-medium'>No posts available</div>
             ) : (
-                posts.map((post) => (
-                    <div key={post.id} className='bg-secondary w-full sm:rounded-lg shadow-custom py-4 px-5 md:px-7'>
-                        {/* USER INFORMATION */}
-                        <div className='flex w-full'>
-                            <img src={post.userProfileImage} className='w-10 h-10 bg-[#D9D9D9] rounded-full' />
-                            <div className='ml-2'>
-                                <p className='font-medium'>{post.userName} <span className='text-sm font-normal ml-1 text-white rounded-full px-3' style={{backgroundColor: post.typeOfPost === 'story' ? '#A87CCD' : post.typeOfPost === 'missing' ? '#ED5050' : '#85B728'}}>{post.typeOfPost}</span></p>
-                                <p className='-mt-[3px] text-xs'>{getTimeDifference(post.createdAt)}</p>
-                            </div>
-                        </div>
+                posts.map((post) => {
+                    const isLiked = likedPosts[post.id];
+                    
 
-                        {/* CAPTION */}
-                        <div className='mt-2'>
-                            <p className='font-medium'>{post.caption}</p>
-                        </div>
-
-                        {/* IMAGES */}
-                        <div className='flex gap-2 md:gap-3 justify-center mt-2 sm:w-[80%] sm:mx-auto'>
-                        {post.images && post.images.length > 0 && ( 
-                            post.images.map((img, index) => <img src={img} key={index} className='w-full object-cover max-w-40 h-44 md:h-52 bg-[#D9D9D9] rounded-md' />
-                        ))}
-                        </div>
-                        
-                        {/* LIKES AND COMMENTS */}
-                        <div className='my-3 flex '>
-                            {/* <div className='justify-between w-full' style={{ display: post.likes.length === 0 || post.comments.length === 0 ? 'none' : 'flex'}}>
-                                <div className='flex items-center'>
-                                    <img className='w-5' src={like} alt="" />
-                                    <p className='text-sm ml-2'>{post.likes.length}</p>
+                    return (
+                        <div key={post.id} className='bg-secondary w-full sm:rounded-lg shadow-custom py-4 px-5 md:px-7'>
+                            {/* USER INFORMATION */}
+                            <div className='flex w-full'>
+                                <img src={post.userProfileImage} className='w-10 h-10 bg-[#D9D9D9] rounded-full' />
+                                <div className='ml-2'>
+                                    <p className='font-medium'>{post.userName} <span className='text-xs sm:text-sm sm:px-3 font-normal ml-1 text-white rounded-full px-2' style={{backgroundColor: post.typeOfPost === 'story' ? '#A87CCD' : post.typeOfPost === 'missing' ? '#ED5050' : '#85B728'}}>{post.typeOfPost}</span></p>
+                                    <p className='-mt-[3px] text-xs'>{getTimeDifference(post.createdAt)}</p>
                                 </div>
-                                <div className='flex items-center'>
-                                    <p className='text-sm ml-2'>{post.comments.length} comments</p>
+                            </div>
+
+                            {/* CAPTION */}
+                            <div className='mt-2'>
+                                <p className='font-medium whitespace-pre-wrap text-sm sm:text-base'>{post.caption}</p>
+                            </div>
+
+                            {/* IMAGES */}
+                            <div className='flex gap-2 md:gap-3 justify-center mt-2 object-cover sm:w-[80%] sm:mx-auto'>
+                            {post.images && post.images.length > 0 && ( 
+                                post.images.map((img, index) => <img src={img} key={index} className='w-full object-cover overflow-hidden max-w-40 h-48 md:h-52 bg-[#D9D9D9] rounded-md' />
+                            ))}
+                            </div>
+
+                            {/* LIKES AND COMMENTS */}
+                            <div className='my-3 flex '>
+                                <div className='justify-between w-full flex'>
+                                    <div className='items-center flex ' style={{ display: post.likeCount > 0 || isLiked ? 'flex' : 'none'}}>
+                                        <img className='w-5' src={like} alt="" />
+                                        <p className='text-sm ml-2' style={{ display: isLiked ? 'none' : 'flex'}}>{post.likeCount}</p>
+                                        <p className='text-sm ml-2' style={{ display: isLiked ? 'flex' : 'none'}}>{post.likeCount + 1}</p>
+                                    </div>
+                                    <div className='items-center flex ' style={{ display: post.commentCount <= 0 ? 'none' : 'flex'}}>
+                                        <p className='text-sm ml-2'>{post.commentCount} comment{post.commentCount > 1 ? 's' : ''}</p>
+                                    </div>
                                 </div>
-                            </div> */}
-                        </div>
+                            </div>
 
-                        {/* LINE */}
-                        <div className='w-full mb-4'>
-                            <div className='h-[1px] w-full relative bg-[#a5a5a5]'></div>
-                        </div>
+                            {/* LINE */}
+                            <div className='w-full mb-4'>
+                                <div className='h-[1px] w-full relative bg-[#a5a5a5]'></div>
+                            </div>
 
-                        {/* USER INTERACTIONS */}
-                        <div className='w-full gap-7 sm:gap-16 xl:gap-20 flex justify-center '>
-                            <div className='flex items-center cursor-pointer'>
-                                <img className='w-6' src={unlike} alt="" />
-                                <p className='font-semibold pl-1 sm:pl-2 text-sm'>Like</p>
+                            {/* USER INTERACTIONS */}
+                            <div className='w-full gap-7 sm:gap-16 xl:gap-20 flex justify-center '>
+                                <div onClick={() => toggleLike(post.id)} className='flex items-center cursor-pointer'>
+                                    <img className='w-6' src={isLiked ? like : unlike} alt="" />
+                                    <p className={`font-semibold pl-1 sm:pl-2 text-sm ${isLiked ? 'text-primary' : ''}`}>Like</p>
+                                </div>
+                                <div onClick={() => openComment(post.id)} className='flex items-center cursor-pointer'>
+                                    <img className='w-[21px]' src={comment} alt="" />
+                                    <p className='font-semibold pl-1 sm:pl-2 text-sm'>Comment</p>
+                                </div>
+                                <div className='flex items-center cursor-pointer'>
+                                    <img className='w-5' src={message} alt="" />
+                                    <p className='font-semibold pl-1 sm:pl-2 text-sm'>Message</p>
+                                </div>
                             </div>
-                            <div className='flex items-center cursor-pointer'>
-                                <img className='w-[21px]' src={comment} alt="" />
-                                <p className='font-semibold pl-1 sm:pl-2 text-sm'>Comment</p>
-                            </div>
-                            <div className='flex items-center cursor-pointer'>
-                                <img className='w-5' src={message} alt="" />
-                                <p className='font-semibold pl-1 sm:pl-2 text-sm'>Message</p>
+
+                            <div className={isCommentOpen ? 'block' : 'hidden'}>
+                                <Comments postID={selectedPost} handleComment={handleComment} closeComment={closeComment} />
                             </div>
                         </div>
-                    </div>
-                ))
+                    )
+                })
             )}
         </>
     )

@@ -6,6 +6,7 @@ import { notifySuccessOrange, notifyWarningOrange } from '../../General/CustomTo
 import { db, storage } from '../../../firebase/firebase';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid'
 
 const MAX_IMAGES = 3;
 
@@ -43,7 +44,8 @@ function CreatePost({closeWindow, postType}) {
 
             // UPLOADING IMAGES IN FIRESTORE
             for (const image of images) {
-                const imageRef = ref(storage, `userPosts/${user.uid}/${image.name}`);
+                const uniqueImageName = `${uuidv4()}-${image.name}`;
+                const imageRef = ref(storage, `userPosts/${user.uid}/${uniqueImageName}`);
                 await uploadBytes(imageRef, image);
                 const imageUrl = await getDownloadURL(imageRef);
                 uploadedImageUrls.push(imageUrl);
@@ -57,17 +59,8 @@ function CreatePost({closeWindow, postType}) {
                 userID: user.uid,
                 createdAt: serverTimestamp(),
                 userName:  userData?.fullName,
-            })
-
-            // ADD LIKES AND COMMENTS COLLECTIONS
-            await addDoc(collection(db, 'likes'), {
-                postID: postRef.id,
-                likesCount: 0,
-            })
-
-            await addDoc(collection(db, 'comments'), {
-                postID: postRef.id,
-                comments: [],
+                likeCount: 0,
+                commentCount: 0,
             })
 
             notifySuccessOrange('Post created successfully.');
@@ -96,7 +89,7 @@ function CreatePost({closeWindow, postType}) {
                     <p className='font-medium shrink-0'>Type of post:<span className='font-light px-3 text-sm text-white ml-2 rounded-full' style={{backgroundColor:postType === 'story' ? '#C18DEC' : postType === 'missing' ? '#ED5050' : '#85B728'}}>{postType}</span></p>
                 </div>
                 <div className='flex-grow flex flex-col min-h-0 mt-1 gap-2'>
-                    <textarea spellCheck="false" value={caption} onChange={(e) => setCaption(e.target.value)} className='bg-secondary leading-4 border-[1px] px-2 py-3 border-[#d6d6d6] rounded-md w-full outline-none' rows="1" placeholder='Enter your caption ...' />
+                    <textarea spellCheck="false" value={caption} onChange={(e) => setCaption(e.target.value)} className='bg-secondary leading-5 border-[1px] px-2 pt-3 pb-1 h-12 border-[#d6d6d6] rounded-md w-full outline-none' rows="1" placeholder='Enter your caption ...' />
                     {/* IMAGE THAT WILL UPLOAD */}
                     <div className='rounded-md relative flex-grow flex justify-center flex-col items-center bg-[#D9D9D9] overflow-hidden'>
                         <input id='images' className='hidden' type="file" accept='image/*' multiple onChange={handleImageChange} />

@@ -152,7 +152,7 @@ function CreateAccount({ createOpen, createClose }) {
                 <div className='flex flex-col py-5 w-full md:w-[60%] justify-center items-center'>
                     <h1 className='text-3xl font-semibold'>Create Account</h1>
                     <div className='flex flex-col items-center mt-3'>
-                        <img draggable='false' className='w-20 rounded-full' src={profilePicture ? URL.createObjectURL(profilePicture) : picture} alt="" />
+                        <img draggable='false' className='w-20 h-20 object-cover overflow-hidden rounded-full' src={profilePicture ? URL.createObjectURL(profilePicture) : picture} alt="" />
                         <button type='button' onClick={() => document.getElementById('profile-picture-input').click()} className='bg-[#00ACAC] cursor-pointer hover:bg-[#0ec0c0] duration-150 text-secondary font-medium text-sm py-1 px-2 rounded-lg mt-3'>Profile Picture</button>
                     </div>
                     <form onSubmit={handleCreateAccount} className='w-full px-10 sm:px-20 md:px-10 mt-2'>

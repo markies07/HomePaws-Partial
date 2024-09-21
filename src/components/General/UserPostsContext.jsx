@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { collection, query, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';  // Firestore instance from your firebase config
+import defaultProfile from '../../assets/icons/default-profile.svg'
 
 const UserPostsContext = createContext();
 
@@ -37,7 +38,7 @@ export const UserPostsProvider = ({ children }) => {
               return {
                 id: postDoc.id,
                 ...postData,
-                userProfileImage: userData?.profilePictureURL, // Default if no image
+                userProfileImage: userData?.profilePictureURL || defaultProfile, // Default if no image
                 userName: userData?.fullName || 'Unknown User',
               };
             })
@@ -49,11 +50,12 @@ export const UserPostsProvider = ({ children }) => {
         } finally {
           setLoading(false);
         }
-      };
+    };
 
     useEffect(() => {
         fetchPosts();
     }, []);
+    
 
     // Provide data via context
     return (

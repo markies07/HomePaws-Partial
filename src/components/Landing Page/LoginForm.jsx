@@ -20,9 +20,7 @@ function LoginForm({loginOpen, loginClose}) {
         try{
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             notifySuccessOrange("Login Successfully!");
-            setTimeout(() => {
-                navigate('/dashboard');
-            }, 3000);
+            navigate('/dashboard');
         }
         catch(error){
             console.error('Login error:', error);
