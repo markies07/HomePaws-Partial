@@ -13,18 +13,15 @@ function Comments({closeComment, postID, handleComment}) {
     const submitComment = async (e) => {
         e.preventDefault();
         if (commentText.trim()) {
-            try{
-                await handleComment(postID, user.uid, commentText);
+            try {
+                const newComment = await handleComment(postID, user.uid, commentText);
+                // Use current date for immediate display
+                newComment.commentedAt = new Date();
+                setComments(prevComments => [newComment, ...prevComments]);
                 setCommentText('');
-                setComments((prevComments) => [...prevComments, newComment]);
-            }
-            catch (error) {
+            } catch (error) {
                 console.error("Error submitting comment: ", error);
-                setComments((prevComments) =>
-                    prevComments.filter((comment) => comment !== newComment)
-                );
             }
-            
         }
     };
 
@@ -40,8 +37,20 @@ function Comments({closeComment, postID, handleComment}) {
     }, [postID]);
 
     const getTimeDifference = (timestamp) => {
+        let date;
+        if (timestamp && typeof timestamp.toDate === 'function') {
+            // Firestore Timestamp
+            date = timestamp.toDate();
+        } else if (timestamp instanceof Date) {
+            // JavaScript Date object
+            date = timestamp;
+        } else {
+            console.log("Invalid timestamp:", timestamp);
+            return 'Just now'; // Fallback for invalid timestamps
+        }
+
         const now = new Date();
-        const timeDiff = Math.abs(now - timestamp.toDate()); // Convert Firestore timestamp to JS Date
+        const timeDiff = Math.abs(now - date);
       
         const seconds = Math.floor(timeDiff / 1000);
         const minutes = Math.floor(seconds / 60);
@@ -65,7 +74,7 @@ function Comments({closeComment, postID, handleComment}) {
         } else {
           return `${seconds} seconds ago`;
         }
-      };
+    };
 
     
     

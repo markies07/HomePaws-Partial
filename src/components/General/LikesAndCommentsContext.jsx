@@ -2,6 +2,7 @@ import React, { createContext, useContext, useId } from "react";
 import { db } from "../../firebase/firebase";
 import { doc, writeBatch, increment, serverTimestamp, collection, addDoc, where, getDocs, query, getDoc } from "firebase/firestore";
 import { notifyErrorOrange, notifySuccessOrange } from "./CustomToast";
+import defaultPic from '../../assets/icons/default-profile.svg';
 
 const LikesAndCommentsContext = createContext();
 
@@ -58,25 +59,41 @@ export const LikesAndCommentsProvider = ({children}) => {
         try{
             // ADDING COMMENT TO THE COMMENTS COLLECTION
             const commentRef = doc(collection(db, 'comments'));
-            batch.set(commentRef, {
+            const commentData = {
                 postId,
                 userId,
                 commentText,
                 commentedAt: serverTimestamp(),
-            });
+            };
+            batch.set(commentRef, commentData);
 
             // ADDING COUNT OF COMMENTCOUT IN USERPOSTS
             const postRef = doc(db, 'userPosts', postId);
             batch.update(postRef, {
                 commentCount: increment(1),
             });
-            notifySuccessOrange("Comment posted!");
 
             // COMMIT THE BATCH
             await batch.commit();
+
+            notifySuccessOrange("Comment posted!");
+
+            // FETCH USER DATA
+            const userRef = doc(db, 'users', userId);
+            const userSnapshot = await getDoc(userRef);
+            const userData = userSnapshot.data();
+
+            return {
+                ...commentData,
+                id: commentRef.id,
+                fullName: userData.fullName || 'Unknown User',
+                profilePicture: userData.profilePictureURL || defaultPic,
+            }
+
         }
         catch(error){
             notifyErrorOrange("Failed posting comment. Please try again");
+            throw error;
         }
     }
 
@@ -97,8 +114,10 @@ export const LikesAndCommentsProvider = ({children}) => {
                 const userData = userSnapshot.data();
                 commentsWithUserProfile.push({
                     ...commentData,
+                    id: commentDoc.id,
                     fullName: userData.fullName || 'Unknown User',  // Default if missing
-                    profilePicture: userData.profilePictureURL || '/default-profile.png', // Default if missing
+                    profilePicture: userData.profilePictureURL || defaultPic, // Default if missing
+                    commentedAt: commentData.commentedAt,
                 });
             } else {
                 console.log('User profile not found!');
