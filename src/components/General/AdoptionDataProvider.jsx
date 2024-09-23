@@ -31,7 +31,6 @@ export const AdoptionDataProvider = ({ children }) => {
         console.error('Error fetching user data from Firestore: ', error);
       } finally {
         setLoading(false);
-        console.log(loading)
       }
     };
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useId } from "react";
 import { db } from "../../firebase/firebase";
-import { doc, writeBatch, increment, serverTimestamp, collection, addDoc, where, getDocs, query, getDoc } from "firebase/firestore";
+import { doc, writeBatch, increment, serverTimestamp, collection, where, getDocs, query, getDoc } from "firebase/firestore";
 import { notifyErrorOrange, notifySuccessOrange } from "./CustomToast";
 import defaultPic from '../../assets/icons/default-profile.svg';
 

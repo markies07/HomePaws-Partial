@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { collection, query, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, doc, getDoc, where } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';  // Firestore instance from your firebase config
 import defaultProfile from '../../assets/icons/default-profile.svg'
 
@@ -12,17 +12,30 @@ export const useUserPosts = () => useContext(UserPostsContext);
 export const UserPostsProvider = ({ children }) => {
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [usersCache, setUsersCache] = useState({});  // To cache user profiles and avoid multiple reads
   
     // Fetch posts with user profile information
-    const fetchPosts = async () => {
+    const fetchPosts = async (filterType) => {
         setLoading(true);
+
+        let postsQuery;
+
         try {
-          const postsQuery = query(
-            collection(db, 'userPosts'), // Use collection function for Firestore v9+
-            orderBy('createdAt', 'desc'),
-            limit(10)
-          );
+          if(!filterType || filterType === 'all') {
+            postsQuery = query(
+              collection(db, 'userPosts'), // Use collection function for Firestore v9+
+              orderBy('createdAt', 'desc'),
+              limit(10)
+            );
+          }
+          else{
+            postsQuery = query(
+              collection(db, 'userPosts'), 
+              where('typeOfPost', '==', filterType),
+              orderBy('createdAt', 'desc'),
+              limit(10)
+            );
+          }
+
 
           const postsSnapshot = await getDocs(postsQuery); // Fetch the posts snapshot
       
@@ -59,7 +72,7 @@ export const UserPostsProvider = ({ children }) => {
 
     // Provide data via context
     return (
-        <UserPostsContext.Provider value={{ posts, loading }}>
+        <UserPostsContext.Provider value={{ posts, loading, fetchPosts }}>
             {children}
         </UserPostsContext.Provider>
     );

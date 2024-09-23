@@ -1,9 +1,20 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import story from './assets/story.svg'
 import missing from './assets/missing.svg'
 import found from './assets/found.svg'
+import { useUserPosts } from '../../General/UserPostsContext'
 
 function Actions({open}) {
+    const { fetchPosts } = useUserPosts();
+    const [filterType, setFilterType] = useState('all'); 
+
+    useEffect(() => {
+        fetchPosts(filterType);
+    }, [filterType]);
+
+    const handleFilterChange = (e) => {
+        setFilterType(e.target.value);
+    };
 
     return (
         <div className='mt-3 px-2 lg:fixed top-24 lg:mt-0 right-1'>
@@ -20,11 +31,11 @@ function Actions({open}) {
                 </div>
                 <div className='bg-secondary order-2 lg:order-1 py-2 lg:pb-3 px-3 rounded-md w-full max-w-[12rem] lg:max-w-full shadow-custom'>
                     <p className='font-medium pb-1 lg:text-lg'>Filter post</p>
-                    <select  className="border-text rounded-md w-full py-1 px-1 outline-none font-medium text-text border-2">
-                        <option className="text-text py-5" value='All'>All</option>
-                        <option className="text-text py-5" value='Story'>Story</option>
-                        <option className="text-text py-5" value='Missing'>Missing</option>
-                        <option className="text-text py-5" value='Found'>Found</option>
+                    <select value={filterType} onChange={handleFilterChange} className="border-text rounded-md w-full py-1 px-1 outline-none font-medium text-text border-2">
+                        <option className="text-text py-5" value='all'>All</option>
+                        <option className="text-text py-5" value='story'>Story</option>
+                        <option className="text-text py-5" value='missing'>Missing</option>
+                        <option className="text-text py-5" value='found'>Found</option>
                     </select>
                 </div>
             </div>

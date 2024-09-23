@@ -9,11 +9,13 @@ import { useLikesAndComments } from '../../General/LikesAndCommentsContext'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import Comments from './Comments'
+import { useImageModal } from '../../General/ImageModalContext'
 
 
 function Posts() {
     const { user } = useContext(AuthContext);
-    const { posts, loading } = useUserPosts();
+    const { showModal } = useImageModal();
+    const { posts } = useUserPosts();
     const { handleLike, handleUnlike, handleComment } = useLikesAndComments();
     
     const [likedPosts, setLikedPosts] = useState({});
@@ -81,7 +83,7 @@ function Posts() {
         setIsCommentOpen(!isCommentOpen);
         setSelectedPost(postID)
     }
-    const closeComment = (postID) => {
+    const closeComment = () => {
         setIsCommentOpen(!isCommentOpen);
         setSelectedPost(null)
     }
@@ -114,7 +116,7 @@ function Posts() {
                             {/* IMAGES */}
                             <div className='flex gap-2 md:gap-3 justify-center mt-2 object-cover sm:w-[80%] sm:mx-auto'>
                             {post.images && post.images.length > 0 && ( 
-                                post.images.map((img, index) => <img src={img} key={index} className='w-full object-cover overflow-hidden max-w-40 h-48 md:h-52 bg-[#D9D9D9] rounded-md' />
+                                post.images.map((img, index) => <img src={img} key={index} onClick={() => showModal(img)} className='w-full cursor-pointer object-cover overflow-hidden max-w-40 h-48 md:h-52 bg-[#D9D9D9] rounded-md' />
                             ))}
                             </div>
 

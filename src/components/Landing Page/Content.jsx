@@ -35,7 +35,7 @@ function Content({ onLoginClick, open }) {
           </div>
       </div>
       {/* AVAILABLE PETS */}
-      <div className='mt-52 md:mt-40 flex justify-center flex-col items-center'>
+      <div className='mt-52 flex justify-center flex-col items-center'>
         <h1 className='text-[#5D5D5D] inline-block font-semibold text-center text-3xl px-5'>Pets Available for Adoption
         </h1>
         <div className='mt-10 mx-5 mb-40 gap-3 sm:gap-5 grid grid-cols-2 md:grid-cols-4'>

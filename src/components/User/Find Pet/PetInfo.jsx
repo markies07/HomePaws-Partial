@@ -9,22 +9,15 @@ import { db } from '../../../firebase/firebase';
 import { notifyErrorOrange, notifySuccessOrange } from '../../General/CustomToast';
 import EditPet from './EditPet';
 import { useNavigate, useParams } from 'react-router-dom';
-import ImageModal from './ImageModal';
+import { useImageModal } from '../../General/ImageModalContext';
 
 function PetInfo() {
     const { user } = useContext(AuthContext);
+    const { showModal } = useImageModal();
     const [isFaqsOpen, setIsFaqsOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(null);
     const navigate = useNavigate();
 
-    const openModal = (imageUrl) => {
-        setSelectedImage(imageUrl);
-    }
-
-    const closeModal = () => {
-        setSelectedImage(null);
-    }
     
     const handleRemovePet = async (petID, petName) => {
         confirm(`Removing ${pet.petName}`, `Do you really want to remove ${pet.petName} from adoption?`).then(async (result) => {
@@ -128,17 +121,14 @@ function PetInfo() {
                     {/* PICTURES */}
                     <div className='max-w-[38rem] pb-7 mx-auto flex pt-14 lg:pt-7 gap-3 sm:gap-5 xl:gap-7'>
                         <div className='bg-[#BCBCBC] overflow-hidden rounded-md h-44 sm:h-56 w-full flex justify-center'>
-                            <img className='w-full object-cover cursor-pointer' src={pet.petImages[0]} onClick={() => openModal(pet.petImages[0])} alt="" />
+                            <img className='w-full object-cover cursor-pointer' src={pet.petImages[0]} onClick={() => showModal(pet.petImages[0])} alt="" />
                         </div>
                         <div className='bg-[#BCBCBC] overflow-hidden rounded-md h-44 sm:h-56 w-full flex justify-center'>
-                            <img className='w-full object-cover cursor-pointer' src={pet.petImages[1]} onClick={() => openModal(pet.petImages[1])} alt="" />
+                            <img className='w-full object-cover cursor-pointer' src={pet.petImages[1]} onClick={() => showModal(pet.petImages[1])} alt="" />
                         </div>
                         <div className='bg-[#BCBCBC] overflow-hidden rounded-md h-44 sm:h-56 w-full flex justify-center'>
-                            <img className='w-full object-cover cursor-pointer' src={pet.petImages[2]} onClick={() => openModal(pet.petImages[2])} alt="" />
+                            <img className='w-full object-cover cursor-pointer' src={pet.petImages[2]} onClick={() => showModal(pet.petImages[2])} alt="" />
                         </div>
-
-                        {/* OPEN MODAL */}
-                        {selectedImage && <ImageModal imageUrl={selectedImage} onClose={closeModal} />}
                     </div>
 
                     {/* INFORMATION */}

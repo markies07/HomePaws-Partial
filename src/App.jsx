@@ -16,6 +16,8 @@ import { UserDataProvider } from "./components/General/UserDataProvider"
 import { AdoptionDataProvider } from "./components/General/AdoptionDataProvider"
 import { UserPostsProvider } from "./components/General/UserPostsContext"
 import { LikesAndCommentsProvider } from "./components/General/LikesAndCommentsContext"
+import { ImageModalProvider } from "./components/General/ImageModalContext"
+import Conversation from "./components/User/Chat/Conversation"
 
 function App() {
   
@@ -25,48 +27,52 @@ function App() {
         <UserPostsProvider>
           <AdoptionDataProvider>
             <LikesAndCommentsProvider>
-              <Router>
-                <Routes>
-                  {/* PUBLIC ROUTE */}
-                  <Route path="/" element={<LandingPage />} />
+              <ImageModalProvider>
+                <Router>
+                  <Routes>
+                    {/* PUBLIC ROUTE */}
+                    <Route path="/" element={<LandingPage />} />
 
-                  {/* PUBLIC ROUTE */}
-                  <Route element={<PrivateRoute />}>
-                    <Route path="/dashboard/*" element={<Dashboard />}>
-                      {/* DEFAULT ROUTE */}
-                      <Route path="" element={<Navigate replace to="find-pet" />} />
+                    {/* PUBLIC ROUTE */}
+                    <Route element={<PrivateRoute />}>
+                      <Route path="/dashboard/*" element={<Dashboard />}>
+                        {/* DEFAULT ROUTE */}
+                        <Route path="" element={<Navigate replace to="find-pet" />} />
 
-                      {/* FIND PET SECTION */}
-                      <Route path="find-pet" element={<FindPet />} />
-                      <Route path="find-pet/:petID" element={<PetInfo />} />
-                      <Route path="find-pet/adoption/:petID" element={<AdoptionForm />} />
+                        {/* FIND PET SECTION */}
+                        <Route path="find-pet" element={<FindPet />} />
+                        <Route path="find-pet/:petID" element={<PetInfo />} />
+                        <Route path="find-pet/adoption/:petID" element={<AdoptionForm />} />
 
-                      {/* NEWS FEED SECTION */}
-                      <Route path="news-feed" element={<NewsFeed />} />
+                        {/* NEWS FEED SECTION */}
+                        <Route path="news-feed" element={<NewsFeed />} />
 
-                      {/* NOTIFICATION SECTION */}
-                      <Route path="notification" element={<Notification />} />
+                        {/* NOTIFICATION SECTION */}
+                        <Route path="notification" element={<Notification />} />
 
-                      {/* CHAT SECTION */}
-                      <Route path="chat" element={<Chat />} />
+                        {/* CHAT SECTION */}
+                        <Route path="chat" element={<Chat />} >
+                          <Route path="convo/:userID" element={<Conversation />} />
+                        </Route>
 
-                      {/* PROFILE SECTION */}
-                      <Route path="profile" element={<Profile />} />
+                        {/* PROFILE SECTION */}
+                        <Route path="profile" element={<Profile />} />
+                      </Route>
                     </Route>
-                  </Route>
-                </Routes>
-                <ToastContainer
-                  position="top-right"
-                  autoClose={2000}
-                  hideProgressBar={true}
-                  newestOnTop={true}
-                  closeOnClick
-                  rtl={false}
-                  pauseOnFocusLoss={false}
-                  draggable
-                  pauseOnHover
-                />
-              </Router>
+                  </Routes>
+                  <ToastContainer
+                    position="top-right"
+                    autoClose={2000}
+                    hideProgressBar={true}
+                    newestOnTop={true}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss={false}
+                    draggable
+                    pauseOnHover
+                  />
+                </Router>
+              </ImageModalProvider>
             </LikesAndCommentsProvider>
           </AdoptionDataProvider>
         </UserPostsProvider>
