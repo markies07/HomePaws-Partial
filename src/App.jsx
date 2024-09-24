@@ -52,7 +52,7 @@ function App() {
 
                         {/* CHAT SECTION */}
                         <Route path="chat" element={<Chat />} >
-                          <Route path="convo/:userID" element={<Conversation />} />
+                          <Route path="convo/:chatID" element={<Conversation />} />
                         </Route>
 
                         {/* PROFILE SECTION */}

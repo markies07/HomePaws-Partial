@@ -3,65 +3,97 @@ import write from './assets/write.svg'
 import search from './assets/search.svg'
 import darkPaw from './assets/dark-paw.png'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { AuthContext } from '../../General/AuthProvider';
-import { collection, getDoc, onSnapshot, query, where } from 'firebase/firestore';
-import { db } from '../../../firebase/firebase';
-import UserDisplay from './UserDisplay'
+import { AuthContext } from '../../General/AuthProvider'
+import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore'
+import { db } from '../../../firebase/firebase'
+import NewMessage from './NewMessage'
 
 function MainMenu() {
+    const { userData } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const isConvoOpen = location.pathname.includes("convo/")
 
-    const { userData } = useContext(AuthContext);
-    const [conversations, setConversations] = useState([]);
-
-    const fetchConversations = () => {
-        const q = query(
-        collection(db, 'conversations'),
-        where('participants', 'array-contains', userData.uid)
-        );
-
-        onSnapshot(q, (snapshot) => {
-        const convo = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setConversations(convo);
-        })
-    }
+    const [chats, setChats] = useState([]);
+    const [usersData, setUsersData] = useState({}); // Store user data here
 
     useEffect(() => {
-        fetchConversations();
-    }, []);
+        const q = query(
+            collection(db, 'chats'),
+            where('participants', 'array-contains', userData.uid)
+        );
 
-    const fetchUserData = async (userID) => {
-        const userDoc = await getDoc(doc(db, 'users', userID));
-        return userDoc.exists() ? userDoc.data() : null;
-    };
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedChats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setChats(fetchedChats);
 
+            // Fetch user details for all participants
+            const participantIds = [...new Set(fetchedChats.flatMap(chat => chat.participants))];
 
-    console.log(conversations);
+            // Fetch user data for each participant
+            const fetchUsersData = async () => {
+                const usersSnapshot = await Promise.all(
+                    participantIds.map(uid => getDoc(doc(db, 'users', uid)))
+                );
+                const users = {};
+                usersSnapshot.forEach(docSnap => {
+                    if (docSnap.exists()) {
+                        users[docSnap.id] = docSnap.data(); // Store user data by their UID
+                    }
+                });
+                setUsersData(users);
+            };
+
+            fetchUsersData();
+        });
+
+        return () => unsubscribe();
+
+    }, [userData.uid]);
 
     return (
-        <div className='font-poppins relative flex mt-3 lg:mt-4 bg-secondary sm:mx-auto lg:mx-0 h-full flex-grow mb-3 w-full lg:p-4 text-text sm:w-[90%] md:w-[97%] lg:w-full sm:rounded-md lg:rounded-lg shadow-custom'>
+        <div className='font-poppins relative flex mt-3 lg:mt-4 bg-secondary sm:mx-auto lg:mx-0 flex-grow mb-3 w-full lg:p-4 text-text sm:w-[90%] md:w-[97%] lg:w-full sm:rounded-md lg:rounded-lg shadow-custom'>
             <div className='py-4 px-5 lg:p-0 w-full md:max-w-[21rem] lg:max-w-[19rem] xl:max-w-[20rem]'>
-                <div className='flex justify-between'>
-                    <h1 className='self-end text-3xl font-medium'>Chat</h1>
-                    <img className='p-2 bg-[#E1E1E1] rounded-full overflow-visible cursor-pointer hover:bg-[#cecece] duration-150' src={write} alt="" />
-                </div>
-                <div className='relative w-full rounded-full overflow-hidden mt-3 mb-5'>
-                    <img className='absolute top-2 left-3' src={search} alt="" />
-                    <input className='bg-[#E1E1E1] w-full pl-11 py-2 outline-none pr-3' type="text" placeholder='Search user'/>
+                <div className='hidden'>
+                    <div className='flex justify-between'>
+                        <h1 className='self-end text-3xl font-medium'>Chat</h1>
+                        <img className='p-2 bg-[#E1E1E1] rounded-full overflow-visible cursor-pointer hover:bg-[#cecece] duration-150' src={write} alt="" />
+                    </div>
+                    <div className='relative w-full rounded-full overflow-hidden mt-3 mb-5'>
+                        <img className='absolute top-2 left-3' src={search} alt="" />
+                        <input className='bg-[#E1E1E1] w-full pl-11 py-2 outline-none pr-3' type="text" placeholder='Search user'/>
+                    </div>
+
+                    {/* USERS */}
+                    <div className='flex flex-col gap-3 max-h-[calc(100vh-320px)] lg:max-h-[calc(100vh-257px)] overflow-y-auto'>
+                        {chats.map((chat) => {
+                            const otherParticipantId = chat.participants.find(p => p !== userData.uid);
+                            const otherUser = usersData[otherParticipantId];
+                            return (
+                                <div key={chat.id} onClick={() => navigate(`convo/${chat.id}`)} className='bg-[#E9E9E9] relative w-full p-3 rounded-lg flex items-center hover:bg-[#d6d6d6] duration-150 cursor-pointer'>
+                                    {otherUser ? (
+                                        <>
+                                            <img className='w-10 h-10 bg-text rounded-full' src={otherUser.profilePictureURL} alt="" />
+                                            <p className='font-medium pl-3 leading-4 w-52'>{otherUser.fullName}</p>
+                                        </>
+                                    ):(
+                                        <p>Loading</p>
+                                    )}
+                                    
+                                    {/* UNREAD */}
+                                    {/* <div className='absolute w-4 h-4 rounded-full bg-primary right-4'></div> */}
+                                </div>
+                            )
+                        })}
+                    </div>
+                    
                 </div>
 
-                {/* USERS */}
-                <div className='flex flex-col gap-3'>
-                    {conversations.map((convo) => (
-                        <div key={convo.id} onClick={() => navigate(`convo/${convo.id}`)} className='bg-[#E9E9E9] relative w-full p-3 rounded-lg flex items-center hover:bg-[#d6d6d6] duration-150 cursor-pointer'>
-                            <UserDisplay participants={convo.participants} />
-                            {/* UNREAD */}
-                            {/* <div className='absolute w-4 h-4 rounded-full bg-primary right-4'></div> */}
-                        </div>
-                    ))}
+                {/* NEW MESSAGE */}
+                <div>
+                    <NewMessage />
                 </div>
+
             </div>
 
             {/* CONVO IN LG SCREEN */}
@@ -69,7 +101,7 @@ function MainMenu() {
                 <div className='flex justify-center items-center h-full flex-col'>
                     {isConvoOpen ? (
                         <Outlet />
-                    ) : (
+                    ):(
                         <>
                             <img className='w-40' src={darkPaw} alt="" />
                             <p className='font-semibold -mt-3'>Messages</p>

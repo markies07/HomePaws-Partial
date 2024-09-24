@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import back from './assets/back.svg'
 import deleteMessage from './assets/delete.svg'
 import kevin from './assets/kevin.png'
@@ -6,41 +6,90 @@ import image from './assets/image.svg'
 import send from './assets/send.svg'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from '../../General/AuthProvider'
-import { collection, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
+import { notifyErrorOrange } from '../../General/CustomToast'
 
 function Conversation() {
     const navigate = useNavigate();
-    const { userData } = useContext(AuthContext);
-    const { userID } = useParams();
-    const [messages, setMessages] = useState([]);
 
-    const fetchMessages = (conversationID) => {
+    const { userData } = useContext(AuthContext);
+    const { chatID } = useParams();
+    const [messages, setMessages] = useState([]);
+    const [otherUser, setOtherUser] = useState([]); 
+    const [newMessage, setNewMessage] = useState('');
+
+    // FETCHING MESSAGES
+    useEffect(() => {
+        if (!chatID) return;
+
+        const fetchOtherUser = async () => {
+            const chatRef = doc(db, 'chats', chatID);
+            const chatDoc = await getDoc(chatRef);
+
+            if (chatDoc.exists()) {
+                const chatData = chatDoc.data();
+                const otherUserID = chatData.participants.find(uid => uid !== userData.uid);
+
+                if (otherUserID) {
+                    const otherUserRef = doc(db, 'users', otherUserID);
+                    const otherUserDoc = await getDoc(otherUserRef);
+
+                    if (otherUserDoc.exists()) {
+                        setOtherUser(otherUserDoc.data());
+                    }
+                }
+            }
+        };
+
+        fetchOtherUser();
+
         const q = query(
-            collection(db, 'conversations', conversationID, 'messages'),
-            orderBy('timestamp', 'asc')
+            collection(db, 'chats', chatID, 'messages'),
+            orderBy('sentAt')
         );
 
-        onSnapshot(q, (snapshot) => {
-            const mess = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setMessages(mess);
-        })
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const fetchedMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setMessages(fetchedMessages);
+        });
+
+        return () => unsubscribe();
+    }, [chatID, userData.uid]);
+
+    
+    // SENDING MESSAGES
+    const handleSendMessage = async (e) => {
+        e.preventDefault();
+
+        try {
+            const messageRef = collection(doc(db, 'chats', chatID), 'messages');
+
+            await addDoc(messageRef, {
+                sender: userData.uid,
+                text: newMessage,
+                sentAt: serverTimestamp(),
+                read: false,
+            });
+
+            setNewMessage('');
+        }
+        catch (error){
+            console.error('Error sending message: ', error);
+            notifyErrorOrange('Error sending message. Please try again.');
+        }
     }
 
+    // SCROLL DOWN TO THE LATEST MESSAGE
+    const messagesEndRef = useRef(null);
+
     useEffect(() => {
-        const fetchConvoMessages = async () => {
-            try{
-                const fetchedMessages = await fetchMessages(userID);
-                setMessages(fetchedMessages);
-            }
-            catch(error){
-                console.log("Error fetching messages: ", error);
-            }
-        } 
-        if(userID){
-            fetchConvoMessages();
-        }
-    }, [userID])
+        scrollToBottom();
+    }, [messages]);
+
+    const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
 
     return (
@@ -50,51 +99,51 @@ function Conversation() {
             <div className='bg-[#E9E9E9] w-full h-full flex flex-col flex-grow sm:rounded-lg'>
                 <div className='flex justify-center items-center relative px-5 py-4 border-b-[1px] border-text'>
                     <img onClick={() => navigate('/dashboard/chat')} className='absolute md:hidden left-4 border-2 border-transparent hover:border-text duration-150 cursor-pointer p-1 w-10' src={back} alt="" />
-                    <p className='font-medium text-xl'>Jordan B. Sorino</p>
+                    <p className='font-medium text-xl'>{otherUser.fullName}</p>
                     <img className='absolute right-5 cursor-pointer' src={deleteMessage} alt="" />
                 </div>
 
                 {/* MESSAGES */}
-                <div className='p-4 flex flex-col overflow-y-auto max-h-[calc(100vh-301px)] lg:max-h-[calc(100vh-246px)] gap-3 flex-grow h-full'>
+                <div className='p-4 flex flex-col overflow-y-auto max-h-[calc(100vh-301px)] md:max-h-[calc(100vh-335px)] lg:max-h-[calc(100vh-274px)] gap-3 flex-grow h-full'>
 
-                    {/* SENDER */}
-                    <div className='flex w-full justify-start'>
-                        {/* PROFILE */}
-                        <img className='w-10 h-10 self-end shrink-0 rounded-full bg-text mr-3' src={kevin} alt="" />
-                        {/* MESSAGE */}
-                        <div className='w-[60%]'>
-                            <p className='bg-text w-fit py-2 px-3 rounded-2xl rounded-bl-none text-white'>HAHA habang buhay ako sayong mag hihintayyy </p>
-                        </div>
-                    </div>
+                    {messages.map((message) => (
+                        message.sender === userData.uid ? (
+                            // RECIEVER
+                            <div key={message.id} className='flex w-full justify-end'>
+                                {/* MESSAGE */}
+                                <div className='w-[60%] flex justify-end'>
+                                    <p className='bg-primary w-fit py-2 px-3 rounded-2xl rounded-br-none text-white'>{message.text}</p>
+                                </div>
+                                {/* PROFILE */}
+                                <img className='w-10 h-10 self-end shrink-0 rounded-full bg-text ml-3' src={userData.profilePictureURL} alt="" />
+                            </div>
 
-                    {/* SENDER */}
-                    <div className='flex w-full justify-start'>
-                        {/* PROFILE */}
-                        <img className='w-10 h-10 self-end shrink-0 rounded-full bg-text mr-3' src={kevin} alt="" />
-                        {/* MESSAGE */}
-                        <div className='w-[60%] flex justify-start'>
-                            <p className='bg-text w-fit py-2 px-3 rounded-2xl rounded-bl-none text-white'>Ampogi mo Mark</p>
-                        </div>
-                    </div>
+                        ):(
+                            // SENDER
+                            <div key={message.id} className='flex w-full justify-start'>
+                                {/* PROFILE */}
+                                <img className='w-10 h-10 self-end shrink-0 rounded-full bg-text mr-3' src={otherUser.profilePictureURL} alt="" />
+                                {/* MESSAGE */}
+                                <div className='w-[60%]'>
+                                    <p className='bg-text w-fit py-2 px-3 rounded-2xl rounded-bl-none text-white'>{message.text}</p>
+                                </div>
+                            </div>
+                        )
+                        
+                    ))}
 
-                    {/* RECIEVER */}
-                    <div className='flex w-full justify-end'>
-                        {/* MESSAGE */}
-                        <div className='w-[60%] flex justify-end'>
-                            <p className='bg-primary w-fit py-2 px-3 rounded-2xl rounded-br-none text-white'>Alam ko gago</p>
-                        </div>
-                        {/* PROFILE */}
-                        <img className='w-10 h-10 self-end shrink-0 rounded-full bg-text ml-3' src="" alt="" />
-                    </div>
-                    
+                    <div ref={messagesEndRef} />
+
                 </div>
 
                 {/* ACTIONS */}
-                <div className='flex px-4 py-4 border-t-[1px] border-text'>
+                <form onSubmit={handleSendMessage} className='flex px-4 py-4 border-t-[1px] border-text'>
                     <img className='w-10 overflow-visible p-[9px] bg-[#BCBCBC] hover:bg-[#adadad] cursor-pointer duration-150 rounded-full' src={image} alt="" />
-                    <input className='w-full mx-4 rounded-full px-3 outline-none' placeholder='Aa' type="text" />
-                    <img className='w-10 overflow-visible py-[9px] pl-[11px] pr-[7px] bg-[#BCBCBC] hover:bg-[#adadad] cursor-pointer duration-150 rounded-full' src={send} alt="" />
-                </div>
+                    <input required value={newMessage} onChange={(e) => setNewMessage(e.target.value)} className='w-full mx-4 rounded-full px-3 outline-none' placeholder='Aa' type="text" />
+                    <button type='submit' className='w-10 shrink-0 h-10 flex justify-center items-center overflow-visible bg-[#BCBCBC] hover:bg-[#adadad] cursor-pointer duration-150 rounded-full'>
+                        <img className='w-6 h-6 ml-1' src={send} alt="" />
+                    </button>
+                </form>
             </div>
         </div>
     )
