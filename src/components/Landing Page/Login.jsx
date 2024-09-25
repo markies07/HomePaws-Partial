@@ -39,7 +39,6 @@ function Login({ isOpen, onClose, handleCreateClick, handleLogin }) {
             }
 
             notifySuccessOrange('Login Successfully!');
-            console.log('User Info: ', user);
             navigate('/dashboard');
 
         }
