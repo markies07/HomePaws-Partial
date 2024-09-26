@@ -55,7 +55,7 @@ function NewMessage({setNewMessage, closeUI}) {
             chatID = newChatRef.id;
             setNewMessage(true);
         }
-
+        closeUI();
         navigate(`convo/${chatID}`);
     }
 

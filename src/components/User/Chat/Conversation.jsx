@@ -23,116 +23,137 @@ function Conversation() {
     // FETCHING MESSAGES
     useEffect(() => {
         if (!chatID) return;
-
+    
         const fetchOtherUser = async () => {
             const chatRef = doc(db, 'chats', chatID);
             const chatDoc = await getDoc(chatRef);
-
+    
             if (chatDoc.exists()) {
                 const chatData = chatDoc.data();
                 const otherUserID = chatData.participants.find(uid => uid !== user.uid);
-
+    
                 if (otherUserID) {
                     const otherUserRef = doc(db, 'users', otherUserID);
                     const otherUserDoc = await getDoc(otherUserRef);
-
+    
                     if (otherUserDoc.exists()) {
                         setOtherUser(otherUserDoc.data());
                     }
                 }
             }
         };
-
+    
         fetchOtherUser();
-
+    
         const q = query(
             collection(db, 'chats', chatID, `messages_${user.uid}`),
             orderBy('sentAt')
         );
-
+    
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const fetchedMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setMessages(fetchedMessages);
         });
-
+    
         return () => unsubscribe();
     }, [chatID]);
-
     
-    // SENDING MESSAGES
+    // For sending messages
     const handleSendMessage = async (e) => {
         e.preventDefault();
-
+    
         const chatRef = doc(db, 'chats', chatID);
         const chatDoc = await getDoc(chatRef);
-
+    
         const chatData = chatDoc.data();
         const otherUserID = chatData.participants.find(uid => uid !== user.uid);
-
+    
         try {
             const message = {
                 sender: user.uid,
                 text: newMessage,
                 sentAt: serverTimestamp(),
                 read: false,
-            }
-
+            };
+    
             const messagesRefUser1 = collection(db, 'chats', chatID, `messages_${user.uid}`);
             const messagesRefUser2 = collection(db, 'chats', chatID, `messages_${otherUserID}`);
-
+    
             await addDoc(messagesRefUser1, message);
             await addDoc(messagesRefUser2, message);
-
+    
             setNewMessage('');
-        }
-        catch (error){
+        } catch (error) {
             console.error('Error sending message: ', error);
             notifyErrorOrange('Error sending message. Please try again.');
         }
-    }
-
-    // CANCELING NEW CONVERSATION
-    const handleCancelChat = async () => {
-        const messageRef = collection(db, 'chats', chatID, `messages_${user.uid}`);
-
-        const messagesSnapshot = await getDocs(messageRef);
-
-        if(messagesSnapshot.empty){
-            await deleteDoc(doc(db, 'chats', chatID));
-            navigate('/dashboard/chat')
-        }
-
-        navigate('/dashboard/chat')
-    }
-
-
-    // DELETING CONVERSATION
+    };
+    
+    // Deleting conversation
     const deleteConversation = async () => {
         confirm(`Deleting Conversation`, `Are you sure you want to delete this conversation?`).then(async (result) => {
-            if(result.isConfirmed){
+            if (result.isConfirmed) {
                 try {
-                    const messagesRef = collection(db, 'chats', chatID, `messages_${user.uid}`);
+                    // Check current user's messages sub-collection
+                    const currentUserMessagesRef = collection(db, 'chats', chatID, `messages_${user.uid}`);
+                    const currentUserMessagesSnapshot = await getDocs(currentUserMessagesRef);
     
-                    const messagesSnapshot = await getDocs(messagesRef);
-            
-                    // Delete all messages of the current user
-                    messagesSnapshot.forEach(async (doc) => {
-                        await deleteDoc(doc.ref);
+                    // Check other user's messages sub-collection
+                    const chatDoc = await getDoc(doc(db, 'chats', chatID));
+                    const chatData = chatDoc.data();
+                    const otherUserID = chatData.participants.find(uid => uid !== user.uid);
+    
+                    const otherUserMessagesRef = collection(db, 'chats', chatID, `messages_${otherUserID}`);
+                    const otherUserMessagesSnapshot = await getDocs(otherUserMessagesRef);
+    
+                    // If both message collections are empty, delete the chat document
+                    if (currentUserMessagesSnapshot.empty && otherUserMessagesSnapshot.empty) {
+                        await deleteDoc(doc(db, 'chats', chatID));
+                    }
+    
+                    // Now remove the current user's messages
+                    currentUserMessagesSnapshot.forEach(async (messageDoc) => {
+                        await deleteDoc(messageDoc.ref);
                     });
     
-                    // Trigger an immediate update in MainMenu by removing the chat from the state
+                    // Optionally, you can also navigate back or update the UI after deletion
                     setChats(prevChats => prevChats.filter(chat => chat.id !== chatID));
-    
-                    // Navigate back to chat list or dashboard
                     navigate('/dashboard/chat');
                 } catch (error) {
-                    notifyErrorOrange('There was an issue deleting this conversation. Please try again');
                     console.error('Error deleting conversation: ', error);
+                    notifyErrorOrange('There was an issue deleting this conversation. Please try again');
                 }
             }
         });
     };
-    
+
+    // CANCELING NEW CONVERSATION
+    const handleCancelChat = async () => {
+        const messagesRefUser = collection(db, 'chats', chatID, `messages_${user.uid}`);
+        const messagesSnapshotUser = await getDocs(messagesRefUser);
+
+        // Get the chat document to find the other user's UID
+        const chatRef = doc(db, 'chats', chatID);
+        const chatDoc = await getDoc(chatRef);
+
+        if (!chatDoc.exists()) return;
+
+        const chatData = chatDoc.data();
+        const otherUserID = chatData.participants.find(uid => uid !== user.uid);
+
+        // Check the other user's messages
+        const messagesRefOtherUser = collection(db, 'chats', chatID, `messages_${otherUserID}`);
+        const messagesSnapshotOtherUser = await getDocs(messagesRefOtherUser);
+
+        // If both the current user's and the other user's message collections are empty
+        if (messagesSnapshotUser.empty && messagesSnapshotOtherUser.empty) {
+            await deleteDoc(chatRef); // Delete the chatID only if both are empty
+        }
+
+        // Navigate back to the main chat list
+        navigate('/dashboard/chat');
+    }
+
 
     // SCROLL DOWN TO THE LATEST MESSAGE
     const messagesEndRef = useRef(null);
@@ -142,7 +163,7 @@ function Conversation() {
     }, [messages]);
 
     const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     return (

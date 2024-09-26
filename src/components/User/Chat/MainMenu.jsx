@@ -4,7 +4,7 @@ import search from './assets/search.svg'
 import darkPaw from './assets/dark-paw.png'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../General/AuthProvider'
-import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import NewMessage from './NewMessage'
 
@@ -24,28 +24,31 @@ function MainMenu() {
             collection(db, 'chats'),
             where('participants', 'array-contains', user.uid)
         );
-        
+    
         const unsubscribe = onSnapshot(q, async (snapshot) => {
             const fetchedChats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
+            
+            // Now we filter out chats that don't have messages
             const chatsWithMessages = [];
-
-            for (const chat of fetchedChats){
-                const messagesRef = collection(db, 'chats', chat.id, `messages_${user.uid}`);
-                const messagesSnapshot = await getDocs(messagesRef);
-
-                if(!messagesSnapshot.empty){
+            
+            for (const chat of fetchedChats) {
+                // We check the current user's messages sub-collection
+                const messagesRefUser = collection(db, 'chats', chat.id, `messages_${user.uid}`);
+                
+                // Fetch only the first document from this sub-collection to check its existence
+                const messagesSnapshotUser = await getDocs(query(messagesRefUser, limit(1)));
+    
+                // Only include the chat if the current user's messages sub-collection has documents
+                if (!messagesSnapshotUser.empty) {
                     chatsWithMessages.push(chat);
                 }
             }
     
-            // Set fetched chats directly here, as we're now capturing real-time changes
             setChats(chatsWithMessages);
     
             // Fetch user details for all participants
             const participantIds = [...new Set(fetchedChats.flatMap(chat => chat.participants))];
     
-            // Fetch user data for each participant
             const fetchUsersData = async () => {
                 const usersSnapshot = await Promise.all(
                     participantIds.map(uid => getDoc(doc(db, 'users', uid)))
@@ -63,7 +66,7 @@ function MainMenu() {
         });
     
         return () => unsubscribe(); // Clean up listener when component unmounts
-    }, [user.uid, chats]);
+    }, [user.uid]);
     
    
     
