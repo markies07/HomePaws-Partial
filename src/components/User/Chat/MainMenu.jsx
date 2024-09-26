@@ -20,11 +20,7 @@ function MainMenu() {
     const [openUsers, setOpenUsers] = useState(false);
 
     useEffect(() => {
-        fetchChats();
-    }, [user.uid]);
-
-    const fetchChats = async () => {
-        let q = query(
+        const q = query(
             collection(db, 'chats'),
             where('participants', 'array-contains', user.uid)
         );
