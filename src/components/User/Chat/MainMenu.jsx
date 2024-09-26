@@ -4,69 +4,89 @@ import search from './assets/search.svg'
 import darkPaw from './assets/dark-paw.png'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../General/AuthProvider'
-import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import NewMessage from './NewMessage'
 
 function MainMenu() {
     const { user } = useContext(AuthContext);
-    const navigate = useNavigate();
+    const [chats, setChats] = useState([]);
+    const [usersData, setUsersData] = useState({});
+    const [lastFetchedChat, setLastFetchedChat] = useState(null);
     const location = useLocation();
     const isConvoOpen = location.pathname.includes("convo/")
-
-    const [chats, setChats] = useState([]);
-    const [usersData, setUsersData] = useState({}); // Store user data here
     const [newMessage, setNewMessage] = useState(false);
     const [openUsers, setOpenUsers] = useState(false);
+    const navigate = useNavigate();
+    const CHATS_PER_PAGE = 10;
 
     useEffect(() => {
-        const q = query(
+        fetchChats();
+    }, [user.uid]);
+
+    const fetchChats = async () => {
+        let q = query(
             collection(db, 'chats'),
-            where('participants', 'array-contains', user.uid)
+            where('participants', 'array-contains', user.uid),
+            limit(CHATS_PER_PAGE)
         );
-        
-        const unsubscribe = onSnapshot(q, async (snapshot) => {
-            const fetchedChats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-            const chatsWithMessages = [];
+        if (lastFetchedChat) {
+            q = query(q, startAfter(lastFetchedChat));
+        }
 
-            for (const chat of fetchedChats){
-                const messagesRef = collection(db, 'chats', chat.id, `messages_${user.uid}`);
-                const messagesSnapshot = await getDocs(messagesRef);
+        const snapshot = await getDocs(q);
+        const fetchedChats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                if(!messagesSnapshot.empty){
-                    chatsWithMessages.push(chat);
-                }
+        // Fetch the latest message for each chat
+        const chatsWithLatestMessage = await Promise.all(fetchedChats.map(async chat => {
+            const messagesRef = collection(db, 'chats', chat.id, `messages_${user.uid}`);
+            const latestMessageQuery = query(messagesRef, orderBy('sentAt', 'desc'), limit(1));
+            const latestMessageSnapshot = await getDocs(latestMessageQuery);
+            
+            const latestMessage = latestMessageSnapshot.docs[0]?.data() || null;
+            return { ...chat, latestMessage };
+        }));
+
+        // Filter out duplicate chats (based on participants)
+        const uniqueChats = chatsWithLatestMessage.reduce((acc, current) => {
+            const x = acc.find(item => item.participants.every(p => current.participants.includes(p)));
+            if (!x) {
+                return acc.concat([current]);
+            } else {
+                return acc;
             }
-    
-            // Set fetched chats directly here, as we're now capturing real-time changes
-            setChats(chatsWithMessages);
-    
-            // Fetch user details for all participants
-            const participantIds = [...new Set(fetchedChats.flatMap(chat => chat.participants))];
-    
-            // Fetch user data for each participant
-            const fetchUsersData = async () => {
-                const usersSnapshot = await Promise.all(
-                    participantIds.map(uid => getDoc(doc(db, 'users', uid)))
-                );
-                const users = {};
-                usersSnapshot.forEach(docSnap => {
-                    if (docSnap.exists()) {
-                        users[docSnap.id] = docSnap.data(); // Store user data by their UID
-                    }
-                });
-                setUsersData(users);
-            };
-    
-            fetchUsersData();
+        }, []);
+
+        setChats(prevChats => {
+            const allChats = [...prevChats, ...uniqueChats];
+            return allChats.filter((chat, index, self) =>
+                index === self.findIndex((t) => t.id === chat.id)
+            );
         });
-    
-        return () => unsubscribe(); // Clean up listener when component unmounts
-    }, [user.uid, chats]);
-    
-   
-    
+        setLastFetchedChat(snapshot.docs[snapshot.docs.length - 1]);
+
+        // Fetch user data for new participants
+        const newParticipants = uniqueChats.flatMap(chat => chat.participants)
+            .filter(uid => !usersData[uid] && uid !== user.uid);
+        
+        if (newParticipants.length > 0) {
+            const newUsersData = await fetchUsersData(newParticipants);
+            setUsersData(prevData => ({ ...prevData, ...newUsersData }));
+        }
+    };
+
+    const fetchUsersData = async (userIds) => {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('uid', 'in', userIds));
+        const usersSnapshot = await getDocs(q);
+        
+        const users = {};
+        usersSnapshot.forEach(doc => {
+            users[doc.data().uid] = doc.data();
+        });
+        return users;
+    };
 
     const handleOpenNewMessage = () => {
         setOpenUsers(!openUsers);
