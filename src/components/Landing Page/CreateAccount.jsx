@@ -39,6 +39,7 @@ function CreateAccount({ createOpen, createClose }) {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            console.log("Auth state changed", currentUser);
             if (currentUser) {
                 setUser(currentUser);
                 if (user && user.emailVerified && isVerifying && pendingUserData) {
@@ -51,6 +52,9 @@ function CreateAccount({ createOpen, createClose }) {
                         console.error("Error creating user document:", error);
                         notifyErrorWhite("Error creating account. Please try again.");
                     }
+                }
+                else if (isVerifying) {
+                    console.log("Email not verified yet");
                 }
             } else {
                 setUser(null);
@@ -80,6 +84,7 @@ function CreateAccount({ createOpen, createClose }) {
 
     const handleCreateAccount = async (e) => {
         e.preventDefault();
+        console.log("Creating account...");
         if (password !== confirmPassword) {
             notifyErrorWhite("Passwords don't match!");
             return;

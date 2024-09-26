@@ -5,56 +5,22 @@ import image from './assets/image.svg'
 import send from './assets/send.svg'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { AuthContext } from '../../General/AuthProvider'
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore'
+import { addDoc, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import { notifyErrorOrange } from '../../General/CustomToast'
+import close from '../../../assets/icons/close-dark.svg'
 import { confirm } from '../../General/CustomAlert'
 
 function Conversation() {
     const navigate = useNavigate();
     const [setChats] = useOutletContext();
-    const { chatID } = useParams();
     const { user, userData } = useContext(AuthContext);
+    const { chatID } = useParams();
     const [messages, setMessages] = useState([]);
-    const [otherUser, setOtherUser] = useState([]);
+    const [otherUser, setOtherUser] = useState([]); 
     const [newMessage, setNewMessage] = useState('');
-    const [lastFetchedMessage, setLastFetchedMessage] = useState(null);
-    const MESSAGES_PER_PAGE = 20;
 
-    const fetchOtherUser = async () => {
-        try {
-            const chatRef = doc(db, 'chats', chatID);
-            const chatDoc = await getDoc(chatRef);
-
-            if (chatDoc.exists()) {
-                const chatData = chatDoc.data();
-                const otherUserID = chatData.participants.find(uid => uid !== user.uid);
-
-                if (otherUserID) {
-                    const userRef = doc(db, 'users', otherUserID);
-                    const userDoc = await getDoc(userRef);
-
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        setOtherUser({ id: userDoc.id, ...userData });
-                    } else {
-                        console.error('Other user document not found');
-                        setError('Other user not found');
-                    }
-                } else {
-                    console.error('Other user ID not found in chat participants');
-                    setError('Other user not found in chat');
-                }
-            } else {
-                console.error('Chat document not found');
-                setError('Chat not found');
-            }
-        } catch (error) {
-            console.error('Error fetching other user:', error);
-            setError('Failed to fetch other user');
-        }
-    };
-
+    // FETCHING MESSAGES
     useEffect(() => {
         if (!chatID) return;
 

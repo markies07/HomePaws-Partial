@@ -20,6 +20,8 @@ function AnimalCard({onLoginClick}) {
     fetchPets();
   }, []);
 
+  console.log(pets)
+
   return (
     <>
       {pets.map((pet, index) => (

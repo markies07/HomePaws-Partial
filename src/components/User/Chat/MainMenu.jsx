@@ -4,21 +4,20 @@ import search from './assets/search.svg'
 import darkPaw from './assets/dark-paw.png'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../General/AuthProvider'
-import { collection, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import NewMessage from './NewMessage'
 
 function MainMenu() {
     const { user } = useContext(AuthContext);
-    const [chats, setChats] = useState([]);
-    const [usersData, setUsersData] = useState({});
-    const [lastFetchedChat, setLastFetchedChat] = useState(null);
+    const navigate = useNavigate();
     const location = useLocation();
     const isConvoOpen = location.pathname.includes("convo/")
+
+    const [chats, setChats] = useState([]);
+    const [usersData, setUsersData] = useState({}); // Store user data here
     const [newMessage, setNewMessage] = useState(false);
     const [openUsers, setOpenUsers] = useState(false);
-    const navigate = useNavigate();
-    const CHATS_PER_PAGE = 10;
 
     useEffect(() => {
         fetchChats();
@@ -27,66 +26,51 @@ function MainMenu() {
     const fetchChats = async () => {
         let q = query(
             collection(db, 'chats'),
-            where('participants', 'array-contains', user.uid),
-            limit(CHATS_PER_PAGE)
+            where('participants', 'array-contains', user.uid)
         );
+        
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            const fetchedChats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        if (lastFetchedChat) {
-            q = query(q, startAfter(lastFetchedChat));
-        }
+            const chatsWithMessages = [];
 
-        const snapshot = await getDocs(q);
-        const fetchedChats = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            for (const chat of fetchedChats){
+                const messagesRef = collection(db, 'chats', chat.id, `messages_${user.uid}`);
+                const messagesSnapshot = await getDocs(messagesRef);
 
-        // Fetch the latest message for each chat
-        const chatsWithLatestMessage = await Promise.all(fetchedChats.map(async chat => {
-            const messagesRef = collection(db, 'chats', chat.id, `messages_${user.uid}`);
-            const latestMessageQuery = query(messagesRef, orderBy('sentAt', 'desc'), limit(1));
-            const latestMessageSnapshot = await getDocs(latestMessageQuery);
-            
-            const latestMessage = latestMessageSnapshot.docs[0]?.data() || null;
-            return { ...chat, latestMessage };
-        }));
-
-        // Filter out duplicate chats (based on participants)
-        const uniqueChats = chatsWithLatestMessage.reduce((acc, current) => {
-            const x = acc.find(item => item.participants.every(p => current.participants.includes(p)));
-            if (!x) {
-                return acc.concat([current]);
-            } else {
-                return acc;
+                if(!messagesSnapshot.empty){
+                    chatsWithMessages.push(chat);
+                }
             }
-        }, []);
-
-        setChats(prevChats => {
-            const allChats = [...prevChats, ...uniqueChats];
-            return allChats.filter((chat, index, self) =>
-                index === self.findIndex((t) => t.id === chat.id)
-            );
+    
+            // Set fetched chats directly here, as we're now capturing real-time changes
+            setChats(chatsWithMessages);
+    
+            // Fetch user details for all participants
+            const participantIds = [...new Set(fetchedChats.flatMap(chat => chat.participants))];
+    
+            // Fetch user data for each participant
+            const fetchUsersData = async () => {
+                const usersSnapshot = await Promise.all(
+                    participantIds.map(uid => getDoc(doc(db, 'users', uid)))
+                );
+                const users = {};
+                usersSnapshot.forEach(docSnap => {
+                    if (docSnap.exists()) {
+                        users[docSnap.id] = docSnap.data(); // Store user data by their UID
+                    }
+                });
+                setUsersData(users);
+            };
+    
+            fetchUsersData();
         });
-        setLastFetchedChat(snapshot.docs[snapshot.docs.length - 1]);
-
-        // Fetch user data for new participants
-        const newParticipants = uniqueChats.flatMap(chat => chat.participants)
-            .filter(uid => !usersData[uid] && uid !== user.uid);
-        
-        if (newParticipants.length > 0) {
-            const newUsersData = await fetchUsersData(newParticipants);
-            setUsersData(prevData => ({ ...prevData, ...newUsersData }));
-        }
-    };
-
-    const fetchUsersData = async (userIds) => {
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('uid', 'in', userIds));
-        const usersSnapshot = await getDocs(q);
-        
-        const users = {};
-        usersSnapshot.forEach(doc => {
-            users[doc.data().uid] = doc.data();
-        });
-        return users;
-    };
+    
+        return () => unsubscribe(); // Clean up listener when component unmounts
+    }, [user.uid, chats]);
+    
+   
+    
 
     const handleOpenNewMessage = () => {
         setOpenUsers(!openUsers);
@@ -95,10 +79,10 @@ function MainMenu() {
     return (
         <div className='font-poppins relative flex mt-3 lg:mt-4 bg-secondary sm:mx-auto lg:mx-0 flex-grow mb-3 w-full lg:p-4 text-text sm:w-[90%] md:w-[97%] lg:w-full sm:rounded-md lg:rounded-lg shadow-custom'>
             <div className='py-4 px-5 lg:p-0 w-full md:max-w-[21rem] lg:max-w-[19rem] xl:max-w-[20rem]'>
-                <div className={openUsers ? 'hidden' : 'block'}>
+                <div className='hidden'>
                     <div className='flex justify-between'>
                         <h1 className='self-end text-3xl font-medium'>Chat</h1>
-                        <img onClick={handleOpenNewMessage} className='p-2 bg-[#E1E1E1] rounded-full overflow-visible cursor-pointer hover:bg-[#cecece] duration-150' src={write} alt="" />
+                        <img className='p-2 bg-[#E1E1E1] rounded-full overflow-visible cursor-pointer hover:bg-[#cecece] duration-150' src={write} alt="" />
                     </div>
                     <div className='relative w-full rounded-full overflow-hidden mt-3 mb-5'>
                         <img className='absolute top-2 left-3' src={search} alt="" />
@@ -108,7 +92,7 @@ function MainMenu() {
                     {/* USERS */}
                     <div className='flex flex-col gap-3 max-h-[calc(100vh-320px)] lg:max-h-[calc(100vh-257px)] overflow-y-auto'>
                         {chats.map((chat) => {
-                            const otherParticipantId = chat.participants.find(p => p !== user.uid);
+                            const otherParticipantId = chat.participants.find(p => p !== userData.uid);
                             const otherUser = usersData[otherParticipantId];
                             return (
                                 <div key={chat.id} onClick={() => navigate(`convo/${chat.id}`)} className='bg-[#E9E9E9] relative w-full p-3 rounded-lg flex items-center hover:bg-[#d6d6d6] duration-150 cursor-pointer'>
@@ -131,8 +115,8 @@ function MainMenu() {
                 </div>
 
                 {/* NEW MESSAGE */}
-                <div className={openUsers ? 'block' : 'hidden'}>
-                    <NewMessage setNewMessage={setNewMessage} closeUI={handleOpenNewMessage} />
+                <div>
+                    <NewMessage />
                 </div>
 
             </div>
@@ -141,7 +125,7 @@ function MainMenu() {
             <div className='bg-[#E9E9E9] md:block hidden w-full my-4 mr-4 lg:m-0 lg:ml-4 rounded-md lg:rounded-lg'>
                 <div className='flex justify-center items-center h-full flex-col'>
                     {isConvoOpen ? (
-                        <Outlet context={[setChats]} />
+                        <Outlet />
                     ):(
                         <>
                             <img className='w-40' src={darkPaw} alt="" />
@@ -153,7 +137,7 @@ function MainMenu() {
 
             {isConvoOpen && (
                 <div className='md:hidden h-full w-full absolute top-0'>
-                    <Outlet context={[setChats]} />
+                    <Outlet />
                 </div>
             )}
         </div>
