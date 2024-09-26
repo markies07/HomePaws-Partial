@@ -9,7 +9,7 @@ import { db } from '../../../firebase/firebase'
 import NewMessage from './NewMessage'
 
 function MainMenu() {
-    const { user } = useContext(AuthContext);
+    const { user, userData } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const isConvoOpen = location.pathname.includes("convo/")
@@ -75,10 +75,10 @@ function MainMenu() {
     return (
         <div className='font-poppins relative flex mt-3 lg:mt-4 bg-secondary sm:mx-auto lg:mx-0 flex-grow mb-3 w-full lg:p-4 text-text sm:w-[90%] md:w-[97%] lg:w-full sm:rounded-md lg:rounded-lg shadow-custom'>
             <div className='py-4 px-5 lg:p-0 w-full md:max-w-[21rem] lg:max-w-[19rem] xl:max-w-[20rem]'>
-                <div className='hidden'>
+                <div className={openUsers ? 'hidden' : 'block'}>
                     <div className='flex justify-between'>
                         <h1 className='self-end text-3xl font-medium'>Chat</h1>
-                        <img className='p-2 bg-[#E1E1E1] rounded-full overflow-visible cursor-pointer hover:bg-[#cecece] duration-150' src={write} alt="" />
+                        <img onClick={handleOpenNewMessage} className='p-2 bg-[#E1E1E1] rounded-full overflow-visible cursor-pointer hover:bg-[#cecece] duration-150' src={write} alt="" />
                     </div>
                     <div className='relative w-full rounded-full overflow-hidden mt-3 mb-5'>
                         <img className='absolute top-2 left-3' src={search} alt="" />
@@ -111,8 +111,8 @@ function MainMenu() {
                 </div>
 
                 {/* NEW MESSAGE */}
-                <div>
-                    <NewMessage />
+                <div className={openUsers ? 'block' : 'hidden'}>
+                    <NewMessage closeUI={handleOpenNewMessage} />
                 </div>
 
             </div>

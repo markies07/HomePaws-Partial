@@ -5,7 +5,7 @@ import { collection, doc, onSnapshot, query } from 'firebase/firestore';
 import { db } from '../../../firebase/firebase';
 import { useNavigate } from 'react-router-dom';
 
-function NewMessage() {
+function NewMessage({closeUI}) {
     const [users, setUsers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const navigate = useNavigate();
@@ -61,7 +61,7 @@ function NewMessage() {
         <>
             <div className='flex justify-between'>
                 <h1 className='self-end text-2xl font-medium'>New Message</h1>
-                <img className='p-2 bg-[#E1E1E1] rounded-full overflow-visible cursor-pointer hover:bg-[#cecece] duration-150' src={close} alt="" />
+                <img onClick={closeUI} className='p-[10px] w-[43px] bg-[#E1E1E1] rounded-full overflow-visible cursor-pointer hover:bg-[#cecece] duration-150' src={close} alt="" />
             </div>
             <div className='relative w-full rounded-full overflow-hidden mt-3 mb-5'>
                 <img className='absolute top-2 left-3' src={search} alt="" />
