@@ -9,7 +9,7 @@ import { db } from '../../../firebase/firebase'
 import NewMessage from './NewMessage'
 
 function MainMenu() {
-    const { user, userData } = useContext(AuthContext);
+    const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
     const isConvoOpen = location.pathname.includes("convo/")
@@ -88,7 +88,7 @@ function MainMenu() {
                     {/* USERS */}
                     <div className='flex flex-col gap-3 max-h-[calc(100vh-320px)] lg:max-h-[calc(100vh-257px)] overflow-y-auto'>
                         {chats.map((chat) => {
-                            const otherParticipantId = chat.participants.find(p => p !== userData.uid);
+                            const otherParticipantId = chat.participants.find(p => p !== user.uid);
                             const otherUser = usersData[otherParticipantId];
                             return (
                                 <div key={chat.id} onClick={() => navigate(`convo/${chat.id}`)} className='bg-[#E9E9E9] relative w-full p-3 rounded-lg flex items-center hover:bg-[#d6d6d6] duration-150 cursor-pointer'>
@@ -112,7 +112,7 @@ function MainMenu() {
 
                 {/* NEW MESSAGE */}
                 <div className={openUsers ? 'block' : 'hidden'}>
-                    <NewMessage closeUI={handleOpenNewMessage} />
+                    <NewMessage setNewMessage={setNewMessage} closeUI={handleOpenNewMessage} />
                 </div>
 
             </div>
@@ -121,7 +121,7 @@ function MainMenu() {
             <div className='bg-[#E9E9E9] md:block hidden w-full my-4 mr-4 lg:m-0 lg:ml-4 rounded-md lg:rounded-lg'>
                 <div className='flex justify-center items-center h-full flex-col'>
                     {isConvoOpen ? (
-                        <Outlet />
+                        <Outlet context={[setChats]} />
                     ):(
                         <>
                             <img className='w-40' src={darkPaw} alt="" />
@@ -133,7 +133,7 @@ function MainMenu() {
 
             {isConvoOpen && (
                 <div className='md:hidden h-full w-full absolute top-0'>
-                    <Outlet />
+                    <Outlet context={[setChats]} />
                 </div>
             )}
         </div>

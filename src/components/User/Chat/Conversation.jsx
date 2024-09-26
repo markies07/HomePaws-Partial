@@ -8,6 +8,7 @@ import { AuthContext } from '../../General/AuthProvider'
 import { addDoc, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import { notifyErrorOrange } from '../../General/CustomToast'
+import close from '../../../assets/icons/close-dark.svg'
 import { confirm } from '../../General/CustomAlert'
 
 function Conversation() {
