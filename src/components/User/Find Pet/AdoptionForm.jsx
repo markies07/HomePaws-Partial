@@ -1,14 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react'
 import close from '../../../assets/icons/close-dark.svg'
 import { useNavigate, useParams } from 'react-router-dom';
-import { addDoc, collection, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/firebase';
 import { notifyErrorOrange, notifySuccessOrange } from '../../General/CustomToast';
-import { UserDataContext } from '../../General/UserDataProvider';
+import { AuthContext } from '../../General/AuthProvider';
 
 function AdoptionForm() {
     const { petID } = useParams();
-    const { userData } = useContext(UserDataContext)
+    const { userData, user } = useContext(AuthContext);
     const navigate = useNavigate();
     
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,8 +42,8 @@ function AdoptionForm() {
             ...prevData,
             petName: pet.petName,
             emailAddress: userData.email,
-            petID: pet.petID,
-            adopterUserID: userData.uid,
+            petID: petID,
+            adopterUserID: user.uid,
             petOwnerID: pet.userID,
           }));
         }
@@ -60,6 +60,20 @@ function AdoptionForm() {
                 dateSubmitted: Timestamp.now(),
                 status: 'pending',
             });
+
+            const notificationRef = collection(db, 'notifications');
+            await addDoc(notificationRef, {
+                userId: pet.userID,
+                senderId: user.uid,
+                senderName: userData.fullName,
+                image: userData.profilePictureURL,
+                type: 'adoption',
+                petId: petID,
+                content: `submitted an adoption application.`,
+                isRead: false,
+                timestamp: serverTimestamp(),
+            })
+
             notifySuccessOrange('Adoption application submitted successfully!');
         }
         catch(error){
@@ -119,7 +133,7 @@ function AdoptionForm() {
                     <div className='w-full flex gap-2 pb-4'>
                         <div className='w-full'>
                             <p className='font-semibold'>Full Name</p>
-                            <input name="fullName" onChange={handleChange} value={formData.adopterName || ''} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
+                            <input required name="adopterName" onChange={handleChange} value={formData.adopterName || ''} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
                         </div>
                     </div>
                     <div className='w-full flex gap-2 pb-4'>
@@ -185,7 +199,7 @@ function AdoptionForm() {
                         </div>
                         <div className='w-[50%]'>
                             <p className='font-semibold'>Occupation</p>
-                            <input required name="experienceWithPets" value={formData.occupation || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
+                            <input required name="occupation" value={formData.occupation || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
                         </div>
                     </div>
                     <div className='w-full flex gap-2 pb-4'>

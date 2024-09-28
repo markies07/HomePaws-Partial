@@ -6,7 +6,7 @@ import { db } from '../../../firebase/firebase';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../General/AuthProvider';
 
-function NewMessage({setNewMessage, closeUI}) {
+function NewMessage({setIsNewMessage, closeUI}) {
     const { user } = useContext(AuthContext);
     const [users, setUsers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -22,8 +22,8 @@ function NewMessage({setNewMessage, closeUI}) {
         return () => unsubscribe();
     }, []);
 
-    const filteredUsers = users.filter(user => 
-        user.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredUsers = users.filter(u => 
+        u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) && u.id !== user.uid
     );
 
     const handleStartChat = async (receiver) => {
@@ -46,14 +46,14 @@ function NewMessage({setNewMessage, closeUI}) {
         let chatID;
         if(existingChat){
             chatID = existingChat;
-            setNewMessage(false);
+            setIsNewMessage(false);
         }
         else{
             const newChatRef = await addDoc(collection(db, 'chats'), {
                 participants: [user.uid, receiver],
             })
             chatID = newChatRef.id;
-            setNewMessage(true);
+            setIsNewMessage(true);
         }
         closeUI();
         navigate(`convo/${chatID}`);
@@ -68,7 +68,7 @@ function NewMessage({setNewMessage, closeUI}) {
             </div>
             <div className='relative w-full rounded-full overflow-hidden mt-3 mb-5'>
                 <img className='absolute top-2 left-3' src={search} alt="" />
-                <input className='bg-[#E1E1E1] w-full pl-11 py-2 outline-none pr-3' type="text" placeholder='Enter user name'/>
+                <input onChange={(e) => setSearchQuery(e.target.value)} value={searchQuery} className='bg-[#E1E1E1] w-full pl-11 py-2 outline-none pr-3' type="text" placeholder='Enter user name'/>
             </div>
 
             {/* USERS */}

@@ -5,20 +5,22 @@ import image from './assets/image.svg'
 import send from './assets/send.svg'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { AuthContext } from '../../General/AuthProvider'
-import { addDoc, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from 'firebase/firestore'
-import { db } from '../../../firebase/firebase'
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from 'firebase/firestore'
+import { db, storage } from '../../../firebase/firebase'
 import { notifyErrorOrange } from '../../General/CustomToast'
-import close from '../../../assets/icons/close-dark.svg'
 import { confirm } from '../../General/CustomAlert'
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 
 function Conversation() {
     const navigate = useNavigate();
-    const [setChats] = useOutletContext();
+    const [setChats, isnewMessage, setIsNewMessage] = useOutletContext();
     const { user, userData } = useContext(AuthContext);
     const { chatID } = useParams();
     const [messages, setMessages] = useState([]);
     const [otherUser, setOtherUser] = useState([]); 
     const [newMessage, setNewMessage] = useState('');
+    const imageInputRef = useRef(null);
+    const [imageUrl, setImageUrl] = useState(null);
 
     // FETCHING MESSAGES
     useEffect(() => {
@@ -59,21 +61,20 @@ function Conversation() {
     }, [chatID]);
     
     // For sending messages
-    const handleSendMessage = async (e) => {
-        e.preventDefault();
-    
+    const handleSendMessage = async (imageUrl = null) => {
+        // Prevent page reload is handled in form submission
         const chatRef = doc(db, 'chats', chatID);
         const chatDoc = await getDoc(chatRef);
-    
         const chatData = chatDoc.data();
         const otherUserID = chatData.participants.find(uid => uid !== user.uid);
-    
+        
         try {
             const message = {
                 sender: user.uid,
-                text: newMessage,
+                text: newMessage || '', // Use text if available
                 sentAt: serverTimestamp(),
                 read: false,
+                image: imageUrl || null // Add the image URL if provided
             };
     
             const messagesRefUser1 = collection(db, 'chats', chatID, `messages_${user.uid}`);
@@ -82,10 +83,41 @@ function Conversation() {
             await addDoc(messagesRefUser1, message);
             await addDoc(messagesRefUser2, message);
     
+            await updateDoc(chatRef, {
+                latestMessage: {
+                    text: newMessage || imageUrl,  // Update latestMessage to reflect either text or image
+                    sentAt: serverTimestamp()
+                }
+            });
+    
+            // Clear message input and imageUrl state
             setNewMessage('');
+            setImageUrl(null); // Reset the image URL state after sending
         } catch (error) {
             console.error('Error sending message: ', error);
             notifyErrorOrange('Error sending message. Please try again.');
+        }
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+    
+        const storageRef = ref(storage, `images/${file.name}`);
+        
+        try {
+            // Upload the image to Firebase Storage
+            await uploadBytes(storageRef, file);
+            const uploadedImageUrl = await getDownloadURL(storageRef);
+            
+            // Call the handleSendMessage to send the image
+            await handleSendMessage(uploadedImageUrl); // Automatically send the image message
+    
+            // Optionally, reset the image input after sending
+            e.target.value = null; // Reset file input
+        } catch (error) {
+            console.error('Error uploading image: ', error);
+            notifyErrorOrange('Error uploading image. Please try again.');
         }
     };
     
@@ -94,29 +126,27 @@ function Conversation() {
         confirm(`Deleting Conversation`, `Are you sure you want to delete this conversation?`).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    // Check current user's messages sub-collection
+                    // Get references to message collections
                     const currentUserMessagesRef = collection(db, 'chats', chatID, `messages_${user.uid}`);
-                    const currentUserMessagesSnapshot = await getDocs(currentUserMessagesRef);
-    
-                    // Check other user's messages sub-collection
                     const chatDoc = await getDoc(doc(db, 'chats', chatID));
                     const chatData = chatDoc.data();
                     const otherUserID = chatData.participants.find(uid => uid !== user.uid);
-    
                     const otherUserMessagesRef = collection(db, 'chats', chatID, `messages_${otherUserID}`);
+                
+                    // Delete current user's messages
+                    const currentUserMessagesSnapshot = await getDocs(currentUserMessagesRef);
+                    const deletePromises = currentUserMessagesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+                    await Promise.all(deletePromises);
+                
+                    // Check if both message collections are now empty
+                    const updatedCurrentUserMessagesSnapshot = await getDocs(currentUserMessagesRef);
                     const otherUserMessagesSnapshot = await getDocs(otherUserMessagesRef);
-    
-                    // If both message collections are empty, delete the chat document
-                    if (currentUserMessagesSnapshot.empty && otherUserMessagesSnapshot.empty) {
+                
+                    if (updatedCurrentUserMessagesSnapshot.empty && otherUserMessagesSnapshot.empty) {
                         await deleteDoc(doc(db, 'chats', chatID));
                     }
-    
-                    // Now remove the current user's messages
-                    currentUserMessagesSnapshot.forEach(async (messageDoc) => {
-                        await deleteDoc(messageDoc.ref);
-                    });
-    
-                    // Optionally, you can also navigate back or update the UI after deletion
+                
+                    // Update UI
                     setChats(prevChats => prevChats.filter(chat => chat.id !== chatID));
                     navigate('/dashboard/chat');
                 } catch (error) {
@@ -149,8 +179,7 @@ function Conversation() {
         if (messagesSnapshotUser.empty && messagesSnapshotOtherUser.empty) {
             await deleteDoc(chatRef); // Delete the chatID only if both are empty
         }
-
-        // Navigate back to the main chat list
+        setIsNewMessage(false);
         navigate('/dashboard/chat');
     }
 
@@ -172,47 +201,54 @@ function Conversation() {
             {/* CONVERSATION */}
             <div className='bg-[#E9E9E9] w-full h-full flex flex-col flex-grow sm:rounded-lg'>
                 <div className='flex justify-center items-center relative px-5 py-4 border-b-[1px] border-text'>
-                    <img onClick={handleCancelChat} className='absolute left-4 border-2 border-transparent hover:border-text duration-150 cursor-pointer p-1 w-10' src={back} alt="" />
-                    <p className='font-medium text-xl'>{otherUser.fullName}</p>
+                    <img onClick={!isnewMessage ? () => navigate('/dashboard/chat') : handleCancelChat} className='absolute left-4 border-2 border-transparent hover:border-text duration-150 cursor-pointer p-1 w-10' src={back} alt="" />
+                    <p className='font-medium text-xl px-10 text-center leading-5'>{otherUser.fullName}</p>
                     <img onClick={deleteConversation} className='absolute right-5 cursor-pointer' src={deleteMessage} alt="" />
                 </div>
 
                 {/* MESSAGES */}
-                <div className='p-4 flex flex-col overflow-y-auto max-h-[calc(100vh-301px)] md:max-h-[calc(100vh-335px)] lg:max-h-[calc(100vh-274px)] gap-3 flex-grow h-full'>
+                <div className='p-4 flex flex-col overflow-y-auto max-h-[calc(100dvh-301px)] md:max-h-[calc(100dvh-335px)] lg:max-h-[calc(100dvh-274px)] gap-3 flex-grow h-full'>
 
-                    {messages.map((message) => (
-                        message.sender === user.uid ? (
-                            // RECIEVER
-                            <div key={message.id} className='flex w-full justify-end'>
-                                {/* MESSAGE */}
-                                <div className='w-[60%] flex justify-end'>
+                {messages.map((message) => (
+                    message.sender === user.uid ? (
+                        // RECIEVER
+                        <div key={message.id} className='flex w-full justify-end'>
+                            {/* MESSAGE */}
+                            <div className='w-[60%] flex justify-end'>
+                                {message.image ? ( // Check if there's an image
+                                    <img src={message.image} alt="sent" className='max-w-full rounded-lg mb-2' />
+                                ) : (
                                     <p className='bg-primary w-fit py-2 px-3 rounded-2xl rounded-br-none text-white'>{message.text}</p>
-                                </div>
-                                {/* PROFILE */}
-                                <img className='w-10 h-10 self-end shrink-0 rounded-full bg-text ml-3' src={userData.profilePictureURL} alt="" />
+                                )}
                             </div>
-
-                        ):(
-                            // SENDER
-                            <div key={message.id} className='flex w-full justify-start'>
-                                {/* PROFILE */}
-                                <img className='w-10 h-10 self-end shrink-0 rounded-full bg-text mr-3' src={otherUser.profilePictureURL} alt="" />
-                                {/* MESSAGE */}
-                                <div className='w-[60%]'>
+                            {/* PROFILE */}
+                            <img className='w-10 h-10 self-end shrink-0 rounded-full bg-text ml-3' src={userData.profilePictureURL} alt="" />
+                        </div>
+                    ) : (
+                        // SENDER
+                        <div key={message.id} className='flex w-full justify-start'>
+                            {/* PROFILE */}
+                            <img className='w-10 h-10 self-end shrink-0 rounded-full bg-text mr-3' src={otherUser.profilePictureURL} alt="" />
+                            {/* MESSAGE */}
+                            <div className='w-[60%]'>
+                                {message.image ? ( // Check if there's an image
+                                    <img src={message.image} alt="received" className='max-w-full rounded-lg mb-2' />
+                                ) : (
                                     <p className='bg-text w-fit py-2 px-3 rounded-2xl rounded-bl-none text-white'>{message.text}</p>
-                                </div>
+                                )}
                             </div>
-                        )
-                        
-                    ))}
+                        </div>
+                    )
+                ))}
 
                     <div ref={messagesEndRef} />
 
                 </div>
 
                 {/* ACTIONS */}
-                <form onSubmit={handleSendMessage} className='flex px-4 py-4 border-t-[1px] border-text'>
-                    <img className='w-10 overflow-visible p-[9px] bg-[#BCBCBC] hover:bg-[#adadad] cursor-pointer duration-150 rounded-full' src={image} alt="" />
+                <form onSubmit={(e) => {e.preventDefault(); handleSendMessage();}} className='flex px-4 py-4 border-t-[1px] border-text'>
+                    <input type="file" accept='image/*' onChange={handleImageUpload} className='hidden' ref={imageInputRef} />
+                    <img onClick={() => imageInputRef.current.click()} className='w-10 overflow-visible p-[9px] bg-[#BCBCBC] hover:bg-[#adadad] cursor-pointer duration-150 rounded-full' src={image} alt="" />
                     <input required value={newMessage} onChange={(e) => setNewMessage(e.target.value)} className='w-full mx-4 rounded-full px-3 outline-none' placeholder='Aa' type="text" />
                     <button type='submit' className='w-10 shrink-0 h-10 flex justify-center items-center overflow-visible bg-[#BCBCBC] hover:bg-[#adadad] cursor-pointer duration-150 rounded-full'>
                         <img className='w-6 h-6 ml-1' src={send} alt="" />

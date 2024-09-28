@@ -6,14 +6,14 @@ import message from './assets/message.svg'
 import { useUserPosts } from '../../General/UserPostsContext'
 import { AuthContext } from '../../General/AuthProvider'
 import { useLikesAndComments } from '../../General/LikesAndCommentsContext'
-import { doc, getDoc } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import Comments from './Comments'
 import { useImageModal } from '../../General/ImageModalContext'
 
 
 function Posts() {
-    const { user } = useContext(AuthContext);
+    const { user, userData } = useContext(AuthContext);
     const { showModal } = useImageModal();
     const { posts } = useUserPosts();
     const { handleLike, handleUnlike, handleComment } = useLikesAndComments();
@@ -42,11 +42,11 @@ function Posts() {
         const isLiked = likedPosts[postID];
 
         if (isLiked) {
-            handleUnlike(postID, user.uid);
+            handleUnlike(postID, user.uid, userData.fullName);
             setLikedPosts({ ...likedPosts, [postID]: false});
-
+            
         } else {
-            handleLike(postID, user.uid);
+            handleLike(postID, user.uid, userData.fullName);
             setLikedPosts({ ...likedPosts, [postID]: true});
         }
     };
