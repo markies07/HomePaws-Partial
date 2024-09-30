@@ -4,8 +4,9 @@ import search from './assets/search.svg'
 import darkPaw from './assets/dark-paw.png'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../General/AuthProvider'
-import { collection, deleteDoc, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore'
+import { collection, getDocs, onSnapshot, orderBy, query, where } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
+import inbox from './assets/inbox.svg'
 import NewMessage from './NewMessage'
 
 function MainMenu() {
@@ -100,25 +101,33 @@ function MainMenu() {
 
                     {/* USERS */}
                     <div className='flex flex-col gap-3 max-h-[calc(100vh-320px)] lg:max-h-[calc(100vh-257px)] overflow-y-auto'>
-                        {filteredChats.map((chat) => {
-                        const otherParticipantId = chat.participants.find(p => p !== user.uid);
-                        const otherUser = usersData[otherParticipantId];
-                            return (
-                                <div key={chat.id} onClick={() => navigate(`convo/${chat.id}`)} className='bg-[#E9E9E9] relative w-full p-3 rounded-lg flex items-center hover:bg-[#d6d6d6] duration-150 cursor-pointer'>
-                                    {otherUser ? (
-                                        <>
-                                            <img className='w-10 h-10 bg-text rounded-full' src={otherUser.profilePictureURL} alt="" />
-                                            <p className='font-medium pl-3 leading-4 w-52'>{otherUser.fullName}</p>
-                                        </>
-                                    ) : (
-                                        <p>Loading</p>
-                                    )}
-                                    
-                                    {/* UNREAD */}
-                                    {/* <div className='absolute w-4 h-4 rounded-full bg-primary right-4'></div> */}
-                                </div>
-                            )
-                        })}
+                        {filteredChats.length === 0 ? (
+                            <div className="text-center text-gray-500 h-screen flex flex-col px-5 items-center justify-center bg-[#E9E9E9] rounded-lg">
+                                <img className='mb-3 w-20' src={inbox} alt="" />
+                                <p className='font-medium text-lg'>No messages, yet.</p>
+                                <p className='text-sm text-[#979797]'>Start chatting with other people.</p>
+                            </div>
+                        ) : (
+                            filteredChats.map((chat) => {
+                            const otherParticipantId = chat.participants.find(p => p !== user.uid);
+                            const otherUser = usersData[otherParticipantId];
+                                return (
+                                    <div key={chat.id} onClick={() => navigate(`convo/${chat.id}`)} className='bg-[#E9E9E9] relative w-full p-3 rounded-lg flex items-center hover:bg-[#d6d6d6] duration-150 cursor-pointer'>
+                                        {otherUser ? (
+                                            <>
+                                                <img className='w-10 h-10 bg-text rounded-full' src={otherUser.profilePictureURL} alt="" />
+                                                <p className='font-medium pl-3 leading-4 w-52'>{otherUser.fullName}</p>
+                                            </>
+                                        ) : (
+                                            <p>Loading</p>
+                                        )}
+                                        
+                                        {/* UNREAD */}
+                                        {/* <div className='absolute w-4 h-4 rounded-full bg-primary right-4'></div> */}
+                                    </div>
+                                )
+                            }))
+                        }
                             
                     </div>
                 </div>

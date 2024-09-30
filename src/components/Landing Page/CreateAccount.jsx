@@ -7,6 +7,7 @@ import { createUserWithEmailAndPassword, sendEmailVerification, auth, onAuthStat
 import { getFirestore, doc, setDoc } from 'firebase/firestore'
 import { notifyErrorWhite, notifySuccessWhite, notifyInfoWhite } from '../General/CustomToast'
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useNavigate } from 'react-router-dom';
 
 function CreateAccount({ createOpen, createClose }) {
     const [fullName, setFullName] = useState('');
@@ -17,6 +18,8 @@ function CreateAccount({ createOpen, createClose }) {
     const [isVerifying, setIsVerifying] = useState(false);
     const [user, setUser] = useState(null);
     const [pendingUserData, setPendingUserData] = useState(null);
+    
+    const navigate = useNavigate();
 
     const db = getFirestore();
 
@@ -76,6 +79,7 @@ function CreateAccount({ createOpen, createClose }) {
 
         await setDoc(doc(db, 'users', user.uid), {
             fullName: userData.fullName,
+            uid: user.uid,
             email: userData.email,
             profilePictureURL,
             createdAt: new Date(),
@@ -119,9 +123,11 @@ function CreateAccount({ createOpen, createClose }) {
                 if (user.emailVerified && pendingUserData) {
                     setIsVerifying(false);
                     await createUserDocument(user, pendingUserData);
+                    notifySuccessWhite("Account created successfully.");
                     resetForm();
                 } else {
                     notifyInfoWhite("Email not verified yet. Please check your inbox.");
+                    navigate('/dashboard');
                 }
             } catch (error) {
                 console.error("Error refreshing user:", error);

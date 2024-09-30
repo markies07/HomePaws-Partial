@@ -18,6 +18,7 @@ import { UserPostsProvider } from "./components/General/UserPostsContext"
 import { LikesAndCommentsProvider } from "./components/General/LikesAndCommentsContext"
 import { ImageModalProvider } from "./components/General/ImageModalContext"
 import Conversation from "./components/User/Chat/Conversation"
+import Post from "./components/User/Notification/Post"
 
 function App() {
   
@@ -49,6 +50,7 @@ function App() {
 
                         {/* NOTIFICATION SECTION */}
                         <Route path="notification" element={<Notification />} />
+                        <Route path="notification/post/:postID" element={<Post />} />
 
                         {/* CHAT SECTION */}
                         <Route path="chat" element={<Chat />} >

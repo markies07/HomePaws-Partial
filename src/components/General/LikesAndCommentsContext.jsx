@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useId, useState } from "react";
 import { db } from "../../firebase/firebase";
-import { doc, writeBatch, increment, serverTimestamp, collection, where, getDocs, query, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, writeBatch, increment, serverTimestamp, collection, where, getDocs, query, getDoc, setDoc, updateDoc, orderBy } from "firebase/firestore";
 import { notifyErrorOrange, notifySuccessOrange } from "./CustomToast";
 import defaultPic from '../../assets/icons/default-profile.svg';
 import { AuthContext } from "./AuthProvider";
@@ -51,56 +51,60 @@ export const LikesAndCommentsProvider = ({children}) => {
             batch.update(postRef, {
                 likeCount: increment(1),
             });
-    
-            // Create a unique document ID for the notification based on the postId and postOwnerId
-            const notificationId = `${postId}_${postOwnerId}_like`; // Ensuring a unique ID
-    
-            // Check if a notification for this post and action type (like) already exists for this post owner
-            const notificationRef = doc(db, 'notifications', notificationId); // Use the predefined ID
-    
-            const notificationSnapshot = await getDoc(notificationRef);
-    
-            let otherUserCount = 0;
-            let newNotificationMessage;
-    
-            if (notificationSnapshot.exists()) {
-                // If a notification already exists, update it
-                const existingNotification = notificationSnapshot.data();
-    
-                otherUserCount = existingNotification.otherUserCount || 0;
-                otherUserCount += 1; // Increase the count of other users who liked the post
-    
-                if (otherUserCount > 1) {
-                    // More than 2 likes, update notification to show `likerName` + others
-                    newNotificationMessage = `and ${otherUserCount} others liked your post.`;
+
+            if(user.uid !== postOwnerId){
+                // Create a unique document ID for the notification based on the postId and postOwnerId
+                const notificationId = `${postId}_${postOwnerId}_like`; // Ensuring a unique ID
+        
+                // Check if a notification for this post and action type (like) already exists for this post owner
+                const notificationRef = doc(db, 'notifications', notificationId); // Use the predefined ID
+        
+                const notificationSnapshot = await getDoc(notificationRef);
+        
+                let otherUserCount = 0;
+                let newNotificationMessage;
+        
+                if (notificationSnapshot.exists()) {
+                    // If a notification already exists, update it
+                    const existingNotification = notificationSnapshot.data();
+        
+                    otherUserCount = existingNotification.otherUserCount || 0;
+                    otherUserCount += 1; // Increase the count of other users who liked the post
+        
+                    if (otherUserCount > 1) {
+                        // More than 2 likes, update notification to show `likerName` + others
+                        newNotificationMessage = `and ${otherUserCount} others liked your post.`;
+                    } else {
+                        // 2 or fewer likes, just show the likerName
+                        newNotificationMessage = `liked your post.`;
+                    }
+        
+                    // Update the notification
+                    batch.update(notificationRef, {
+                        content: newNotificationMessage,
+                        otherUserCount, // Keep track of how many others have liked
+                        senderName: likerName, // Update to show only the latest user who liked the post
+                        image: userData.profilePictureURL,
+                        timestamp: serverTimestamp(),
+                    });
                 } else {
-                    // 2 or fewer likes, just show the likerName
+                    // If no notification exists, create a new one with the predefined ID
                     newNotificationMessage = `liked your post.`;
+        
+                    batch.set(notificationRef, {
+                        userId: postOwnerId, // The post owner who will receive the notification
+                        type: 'like',
+                        senderName: likerName, // Store only the most recent likerName
+                        postID: postId,
+                        content: newNotificationMessage,
+                        image: userData.profilePictureURL,
+                        otherUserCount: 0, // Start with 0 other users
+                        isRead: false,
+                        timestamp: serverTimestamp(),
+                    });
                 }
-    
-                // Update the notification
-                batch.update(notificationRef, {
-                    content: newNotificationMessage,
-                    otherUserCount, // Keep track of how many others have liked
-                    senderName: likerName, // Update to show only the latest user who liked the post
-                    timestamp: serverTimestamp(),
-                });
-            } else {
-                // If no notification exists, create a new one with the predefined ID
-                newNotificationMessage = `liked your post.`;
-    
-                batch.set(notificationRef, {
-                    userId: postOwnerId, // The post owner who will receive the notification
-                    type: 'like',
-                    senderName: likerName, // Store only the most recent likerName
-                    postID: postId,
-                    content: newNotificationMessage,
-                    image: userData.profilePictureURL,
-                    otherUserCount: 0, // Start with 0 other users
-                    isRead: false,
-                    timestamp: serverTimestamp(),
-                });
             }
+    
     
             // Commit the batch
             await batch.commit();
@@ -111,10 +115,6 @@ export const LikesAndCommentsProvider = ({children}) => {
         }
     };
     
-    
-    
-    
-
     // HANDLING UNLIKE
     const handleUnlike = async (postId, likerId) => {
         try {
@@ -131,45 +131,50 @@ export const LikesAndCommentsProvider = ({children}) => {
                 likeCount: increment(-1),
             });
 
-            // FETCH EXISTING LIKE NOTIFICATIONS
-            const notificationQuery = query(
-                collection(db, 'notifications'),
-                where('postID', '==', postId),
-                where('type', '==', 'like')
-            );
-            
-            const notificationSnapshot = await getDocs(notificationQuery);
+            const postSnapshot = await getDoc(postRef);
+            const postOwnerId = postSnapshot.data().userID;
 
-            if (!notificationSnapshot.empty) {
-                const notificationDoc = notificationSnapshot.docs[0];
-                const notificationData = notificationDoc.data();
+            if(user.uid !== postOwnerId){
+                // FETCH EXISTING LIKE NOTIFICATIONS
+                const notificationQuery = query(
+                    collection(db, 'notifications'),
+                    where('postID', '==', postId),
+                    where('type', '==', 'like')
+                );
+                
+                const notificationSnapshot = await getDocs(notificationQuery);
     
-                // Fetch the name of the user who liked the post
-                const senderDoc = await getDoc(doc(db, 'users', likerId));
-                const senderName = senderDoc.exists() ? senderDoc.data().fullName : 'Someone'; // Fallback to 'Someone' if name isn't found
-    
-                let otherUserCount = notificationData.otherUserCount || 0;
-    
-                if (otherUserCount > 0) {
-                    // IF OTHER USERS LIKED THE POST, UPDATE THE NOTIFICATION
-                    otherUserCount -= 1;
-                    let updatedMessage;
-    
-                    if (otherUserCount === 0) {
-                        updatedMessage = `liked your post.`;
+                if (!notificationSnapshot.empty) {
+                    const notificationDoc = notificationSnapshot.docs[0];
+                    const notificationData = notificationDoc.data();
+        
+                    // Fetch the name of the user who liked the post
+                    const senderDoc = await getDoc(doc(db, 'users', likerId));
+                    const senderName = senderDoc.exists() ? senderDoc.data().fullName : 'Someone'; // Fallback to 'Someone' if name isn't found
+        
+                    let otherUserCount = notificationData.otherUserCount || 0;
+        
+                    if (otherUserCount > 0) {
+                        // IF OTHER USERS LIKED THE POST, UPDATE THE NOTIFICATION
+                        otherUserCount -= 1;
+                        let updatedMessage;
+        
+                        if (otherUserCount === 0) {
+                            updatedMessage = `liked your post.`;
+                        } else {
+                            updatedMessage = `and ${otherUserCount} others liked your post.`;
+                        }
+        
+                        // UPDATE THE EXISTING NOTIFICATION
+                        batch.update(notificationDoc.ref, {
+                            content: updatedMessage,
+                            otherUserCount,
+                            timestamp: serverTimestamp(),
+                        });
                     } else {
-                        updatedMessage = `and ${otherUserCount} others liked your post.`;
+                        // IF NO OTHER USERS LIKED THE POST, DELETE THE NOTIFICATION
+                        batch.delete(notificationDoc.ref);
                     }
-    
-                    // UPDATE THE EXISTING NOTIFICATION
-                    batch.update(notificationDoc.ref, {
-                        content: updatedMessage,
-                        otherUserCount,
-                        timestamp: serverTimestamp(),
-                    });
-                } else {
-                    // IF NO OTHER USERS LIKED THE POST, DELETE THE NOTIFICATION
-                    batch.delete(notificationDoc.ref);
                 }
             }
 
@@ -215,53 +220,55 @@ export const LikesAndCommentsProvider = ({children}) => {
             const postSnapshot = await getDoc(postRef);
             const postOwnerId = postSnapshot.data().userID; // Adjust this based on your structure
     
-            // Check if a notification for this post and action type (comment) already exists
-            const notificationId = `${postId}_${postOwnerId}_comment`; // Unique ID for comment notifications
-            const notificationRef = doc(db, 'notifications', notificationId);
-            const notificationSnapshot = await getDoc(notificationRef);
-    
-            let otherCommentersCount = 0;
-            let newNotificationMessage;
-    
-            if (notificationSnapshot.exists()) {
-                // If a notification already exists, update it
-                const existingNotification = notificationSnapshot.data();
-    
-                otherCommentersCount = existingNotification.otherCommentersCount || 0;
-                otherCommentersCount += 1; // Increment the count for other commenters
-    
-                if (otherCommentersCount > 1) {
-                    // More than 2 commenters, update notification to show recent commenter and others
-                    newNotificationMessage = `and ${otherCommentersCount} others commented on your post.`;
+            if(user.uid !== postOwnerId){
+                // Check if a notification for this post and action type (comment) already exists
+                const notificationId = `${postId}_${postOwnerId}_comment`; // Unique ID for comment notifications
+                const notificationRef = doc(db, 'notifications', notificationId);
+                const notificationSnapshot = await getDoc(notificationRef);
+        
+                let otherCommentersCount = 0;
+                let newNotificationMessage;
+        
+                if (notificationSnapshot.exists()) {
+                    // If a notification already exists, update it
+                    const existingNotification = notificationSnapshot.data();
+        
+                    otherCommentersCount = existingNotification.otherCommentersCount || 0;
+                    otherCommentersCount += 1; // Increment the count for other commenters
+        
+                    if (otherCommentersCount > 1) {
+                        // More than 2 commenters, update notification to show recent commenter and others
+                        newNotificationMessage = `and ${otherCommentersCount} others commented on your post.`;
+                    } else {
+                        // 2 or fewer comments, just show the senderName
+                        newNotificationMessage = `commented on your post.`;
+                    }
+        
+                    // Update the notification
+                    await updateDoc(notificationRef, {
+                        content: newNotificationMessage,
+                        otherCommentersCount, // Track how many other users have commented
+                        senderName: senderName, // Show only the most recent commenter
+                        image: userData.profilePictureURL,
+                        timestamp: serverTimestamp(),
+                    });
                 } else {
-                    // 2 or fewer comments, just show the senderName
+                    // If no notification exists, create a new one
                     newNotificationMessage = `commented on your post.`;
+        
+                    await setDoc(notificationRef, {
+                        type: 'comment',
+                        postID: postId,
+                        senderId: userId,
+                        image: userData.profilePictureURL, // Optional: Include user profile picture
+                        senderName: senderName, // Only show the latest sender
+                        content: newNotificationMessage,
+                        otherCommentersCount: 0, // Start with 0 other commenters
+                        isRead: false,
+                        timestamp: serverTimestamp(),
+                        userId: postOwnerId, // Notify the post owner
+                    });
                 }
-    
-                // Update the notification
-                await updateDoc(notificationRef, {
-                    content: newNotificationMessage,
-                    otherCommentersCount, // Track how many other users have commented
-                    senderName: senderName, // Show only the most recent commenter
-                    image: userData.profilePictureURL,
-                    timestamp: serverTimestamp(),
-                });
-            } else {
-                // If no notification exists, create a new one
-                newNotificationMessage = `commented on your post.`;
-    
-                await setDoc(notificationRef, {
-                    type: 'comment',
-                    postID: postId,
-                    senderId: userId,
-                    image: userData.profilePictureURL, // Optional: Include user profile picture
-                    senderName: senderName, // Only show the latest sender
-                    content: newNotificationMessage,
-                    otherCommentersCount: 0, // Start with 0 other commenters
-                    isRead: false,
-                    timestamp: serverTimestamp(),
-                    userId: postOwnerId, // Notify the post owner
-                });
             }
 
             notifySuccessOrange("Comment posted!");
@@ -280,11 +287,8 @@ export const LikesAndCommentsProvider = ({children}) => {
         }
     };
     
-    
-    
-
     const fetchComments = async (postId) => {
-        const q = query(collection(db, 'comments'), where('postId', '==', postId));
+        const q = query(collection(db, 'comments'), where('postId', '==', postId), orderBy('commentedAt', 'desc'));
         const commentsSnapshot = await getDocs(q);
         const commentsWithUserProfile = [];
 

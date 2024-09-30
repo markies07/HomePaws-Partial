@@ -1,20 +1,23 @@
 import React, { useContext, useEffect, useState } from 'react'
 import markAsRead from './assets/read.svg'
 import { AuthContext } from '../../General/AuthProvider'
-import { collection, doc, getDocs, orderBy, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, orderBy, query, updateDoc, where, writeBatch } from 'firebase/firestore';
 import { db } from '../../../firebase/firebase';
-import like from './assets/like.svg'
-import comment from './assets/comment.svg'
+import like from './assets/like-type.svg'
+import comment from './assets/comment-type.svg'
 import application from './assets/application.svg'
+import { useNavigate } from 'react-router-dom';
 
 function Notification() {
     const { user } = useContext(AuthContext);
     const [notifications, setNotifications] = useState([]);
-    const [profile, setProfile] = useState('');
+    const [marOpen, setMarOpen] = useState(false);
+    const [isUnreadSelected, setIsUnreadSelected] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchNotifications = async () => {
-            try{
+            try {
                 const notificationsRef = query(
                     collection(db, 'notifications'),
                     where('userId', '==', user.uid),
@@ -24,18 +27,58 @@ function Notification() {
                 const snapshot = await getDocs(notificationsRef);
                 const userNotifications = snapshot.docs.map(doc => ({
                     id: doc.id,
-                    ...doc.data()
+                    ...doc.data(),
                 }));
-
+    
                 setNotifications(userNotifications);
-            }
-            catch(error){
+            } catch (error) {
                 console.log('Error: ', error);
             }
-
-        }
+        };
         fetchNotifications();
     }, [user.uid]);
+
+    // Handle toggling between "All" and "Unread" tabs
+    const handleTabClick = (unreadSelected) => {
+        setIsUnreadSelected(unreadSelected);
+    };
+
+    const markAllAsRead = async (userId) => {
+        try {
+            // Create a batch instance
+            const batch = writeBatch(db);
+    
+            // Fetch all unread notifications for the current user
+            const notificationsRef = query(
+                collection(db, 'notifications'),
+                where('userId', '==', userId),
+                where('isRead', '==', false)
+            );
+    
+            const snapshot = await getDocs(notificationsRef);
+    
+            if (snapshot.empty) {
+                console.log("No unread notifications to mark as read.");
+                return;
+            }
+    
+            // Loop through each unread notification and update it to 'isRead: true'
+            snapshot.docs.forEach((doc) => {
+                const notificationRef = doc.ref; // Get the document reference
+                batch.update(notificationRef, { isRead: true }); // Update the isRead field
+            });
+    
+            // Commit the batch update
+            await batch.commit();
+            console.log("All notifications marked as read!");
+            window.location.reload();
+        } catch (error) {
+            console.error("Error marking notifications as read: ", error);
+        }
+    };
+
+    // Filter notifications if "Unread" tab is selected
+    const displayedNotifications = isUnreadSelected ? notifications.filter(notification => !notification.isRead) : notifications;
 
     const getTimeDifference = (timestamp) => {
         const now = new Date();
@@ -51,49 +94,80 @@ function Notification() {
         if (seconds < 10) {
           return 'Just now';
         } else if (years > 0) {
-          return years === 1 ? '1 year ago' : `${years}y ago`;
+          return years === 1 ? '1y ago' : `${years}y ago`;
         } else if (months > 0) {
-          return months === 1 ? '1 month ago' : `${months}m ago`;
+          return months === 1 ? '1m ago' : `${months}m ago`;
         } else if (days > 0) {
-          return days === 1 ? '1 day ago' : `${days}d ago`;
+          return days === 1 ? '1d ago' : `${days}d ago`;
         } else if (hours > 0) {
-          return hours === 1 ? '1 hour ago' : `${hours}h ago`;
+          return hours === 1 ? '1h ago' : `${hours}h ago`;
         } else if (minutes > 0) {
-          return minutes === 1 ? '1 minute ago' : `${minutes}m ago`;
+          return minutes === 1 ? '1min ago' : `${minutes}min ago`;
         } else {
           return `${seconds}s ago`;
         }
       };
 
+    const openMarkAsRead = () => {
+        setMarOpen(!marOpen);
+    }
+
+    const readNotif = async (postID, notificationID, notifType) => {
+        const notificationRef = doc(db, 'notifications', notificationID);
+
+        await updateDoc(notificationRef, {
+            isRead: true,
+        })
+
+        if(notifType === 'like'){
+            navigate(`post/${postID}`)
+        }
+        else if(notifType === 'comment'){
+            navigate(`post/${postID}`)
+        }
+        else{
+            navigate(`post/${postID}`)
+        }
+    }
+
     return (
         <div className='pt-36 relative lg:pt-20 lg:pl-48 xl:pl-56 lg:pr-3 lg:ml-4 min-h-screen flex flex-col font-poppins text-text'>
             <div className='flex mt-3 lg:mt-4 bg-secondary sm:mx-auto lg:mx-0 flex-grow mb-3 w-full text-text sm:w-[97%] lg:w-full sm:rounded-md lg:rounded-lg shadow-custom'>
                 <div className='p-5 md:px-7 w-full'>
-                    <div className='flex justify-between'>
+                    <div className='flex relative justify-between'>
                         <h1 className='text-2xl font-semibold'>Notification</h1>
-                        <img className='w-8 p-1 rounded-full hover:bg-[#d8d8d8] cursor-pointer duration-150' src={markAsRead} alt="" />
+                        <img onClick={openMarkAsRead} className='w-8 p-1 rounded-full hover:bg-[#d8d8d8] cursor-pointer duration-150' src={markAsRead} alt="" />
+                        <div style={{display: marOpen ? 'block' : 'none'}} onClick={() => markAllAsRead(user.uid)} className='absolute top-9 rounded-lg right-0 bg-white cursor-pointer shadow-custom'>
+                            <p className='px-5 py-2 font-medium'>Mark all as read</p>
+                        </div>
                     </div>
                     <div className='flex gap-1 my-3'>
-                        <p className='cursor-pointer text-sm font-medium text-white bg-primary py-1 px-3 rounded-md'>All</p>
-                        <p className='cursor-pointer text-sm font-medium py-1 px-3'>Unread</p>
+                        <p onClick={() => handleTabClick(false)} className={`cursor-pointer text-sm font-medium py-1 px-3 ${!isUnreadSelected ? 'bg-primary rounded-md text-white' : ''}`}>All</p>
+                        <p onClick={() => handleTabClick(true)} className={`cursor-pointer text-sm font-medium py-1 px-3 ${isUnreadSelected ? 'bg-primary rounded-md text-white' : ''}`}>Unread</p>
                     </div>
 
                     {/* NOTIFICATION */}
                     <div className='mt-4 flex flex-col gap-3'>
-                        {notifications.map((notification) => (
-                            <div key={notification.id} className='bg-[#E9E9E9] relative items-center flex hover:bg-[#d3d3d3] duration-150 cursor-pointer w-full p-3 rounded-lg'>
-                                <div className='relative w-12 h-12 shrink-0'>
-                                    <img className='w-full h-full object-cover rounded-full' src={notification.image} alt="" />
-                                    <img className='w-6 h-6 absolute rounded-full bottom-0 -right-1' src={notification.type == 'like' ? like : notification.type == 'comment' ? comment : application} alt="" />
+                        {/* Check if there are no notifications */}
+                        {displayedNotifications.length === 0 ? (
+                            <div className="text-center text-gray-500 font-medium py-5 bg-[#E9E9E9] rounded-md">No Notification</div>
+                        ) : (
+                            displayedNotifications.map((notification) => (
+                                <div key={notification.id} onClick={() => readNotif(notification.postID, notification.id, notification.type)} className='bg-[#E9E9E9] relative items-center flex hover:bg-[#d3d3d3] duration-150 cursor-pointer w-full p-3 rounded-lg'>
+                                    <div className='relative w-12 h-12 shrink-0'>
+                                        <img className='w-full h-full object-cover rounded-full' src={notification.image} alt="" />
+                                        <img className='w-6 h-6 absolute rounded-full bottom-0 -right-1' src={notification.type == 'like' ? like : notification.type == 'comment' ? comment : application} alt="" />
+                                    </div>
+                                    <div className={`pl-3 sm:pl-4 flex flex-col justify-center ${notification.isRead ? 'pr-0' : 'pr-7'}`}>
+                                        <p className='font-semibold text-sm sm:text-base leading-4'>{notification.senderName} <span className='font-normal'>{notification.content}</span></p>
+                                        <p className='text-xs sm:text-[13px] text-[#8a8a8a] mt-1 sm:mt-0'>{getTimeDifference(notification.timestamp)}</p>
+                                    </div>
+                                    <div style={{display: !notification.isRead ? 'flex' : 'none'}} className='absolute right-3 sm:right-5 top-0 h-full items-center'>
+                                        <div className='w-4 h-4 bg-primary rounded-full' />
+                                    </div>
                                 </div>
-                                <div className='pl-3 pr-7 sm:pl-4 flex flex-col justify-center'>
-                                    <p className='font-semibold text-sm sm:text-base leading-4'>{notification.senderName} <span className='font-normal'>{notification.content}</span></p>
-                                    <p className='text-xs sm:text-[13px] text-[#8a8a8a] mt-1 sm:mt-0'>{getTimeDifference(notification.timestamp)}</p>
-                                </div>
-                                <div style={{display: !notification.isRead ? 'block' : 'none'}} className='absolute w-4 h-4 right-3 sm:right-5 top-[27px] bg-primary rounded-full' />
-                            </div>
-                        ))}
-
+                            ))
+                        )}
                     </div>
 
                 </div>

@@ -88,6 +88,7 @@ function Posts() {
         setSelectedPost(null)
     }
 
+
     return (
         <>
             {posts.length === 0 ? (

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import close from '../../../assets/icons/close-dark.svg'
 import { useNavigate, useParams } from 'react-router-dom';
-import { addDoc, collection, doc, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, serverTimestamp, Timestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/firebase';
 import { notifyErrorOrange, notifySuccessOrange } from '../../General/CustomToast';
 import { AuthContext } from '../../General/AuthProvider';
@@ -55,16 +55,21 @@ function AdoptionForm() {
 
         setIsSubmitting(true);
         try{
-            await addDoc(collection(db, 'adoptionApplications'), {
+            const docRef = await addDoc(collection(db, 'adoptionApplications'), {
                 ...formData,
                 dateSubmitted: Timestamp.now(),
                 status: 'pending',
+            });
+
+            await updateDoc(docRef, {
+                applicationID: docRef.id,
             });
 
             const notificationRef = collection(db, 'notifications');
             await addDoc(notificationRef, {
                 userId: pet.userID,
                 senderId: user.uid,
+                applicationID: docRef.id,
                 senderName: userData.fullName,
                 image: userData.profilePictureURL,
                 type: 'adoption',
