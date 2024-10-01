@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import unfavorite from '../../../assets/icons/unfavorite.svg'
 import { useNavigate } from 'react-router-dom'
 
-function Pets({pets}) {
+function Pets({pets, loading}) {
 
     const navigate = useNavigate();
 
@@ -17,6 +17,8 @@ function Pets({pets}) {
                         <p className='absolute font-medium flex justify-center items-center text-[#5D5D5D] bottom-0 bg-[#FAFAFA] w-full h-10'>{pet.petName}</p>
                     </div>
                 ))
+            ) : loading ? (
+                <p className='text-center col-span-full text-xl font-medium text-text'>Loading pets...</p>
             ) : (
                 <p className='text-center col-span-full text-xl font-medium text-text'>No available pets.</p>
             )}

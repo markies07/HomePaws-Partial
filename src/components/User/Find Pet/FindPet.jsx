@@ -11,6 +11,7 @@ function FindPet() {
   const [pets, setPets] = useState([]);
   const [petInfoOpen, setPetInfoOpen] = useState(false);
   const [selectedPet, setSelectedPet] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
     breed: 'Any',
@@ -20,14 +21,13 @@ function FindPet() {
     color: 'Any'
   });
 
-  const [error, setError] = useState(null);
-
   useEffect(() => {
     fetchPets();
   }, [petType, filters]);
 
   const fetchPets = async () => {
     try {
+      setLoading(true);
       let petsQuery = collection(db, "petsForAdoption");
 
       // Apply pet type filter
@@ -55,15 +55,16 @@ function FindPet() {
       }));
 
       setPets(petsList);
-    } catch (err) {
+    } 
+    catch (err) {
       console.error("Error fetching pets:", err);
       setError(err.message);
     }
+    finally{
+      setLoading(false);
+    }
   };
 
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
 
   const handleClickPetOpen = () => {
     setPostPetOpen(!postPetOpen);
@@ -85,7 +86,7 @@ function FindPet() {
             <Options openPostPet={handleClickPetOpen} filters={filters} onFilterChange={handleFilterChange} changeFilter={handlePetTypeChange} selected={petType} />
           </div>
           <div className='order-2 lg:order-1 justify-center flex mx-auto flex-grow sm:rounded-lg lg:rounded-lg bg-secondary shadow-custom mt-3 mb-4 lg:my-4 w-full sm:w-[90%] lg:w-full lg:mr-[11.5rem] xl:mr-[12.6rem] 2xl:mr-[13.6rem]'>
-            <Pets pets={pets} selected={petType} />    
+            <Pets pets={pets} selected={petType} loading={loading} />    
           </div>
         </div>
         <div style={{display: postPetOpen ? 'block' : 'none'}} className='w-full'>

@@ -10,9 +10,11 @@ import { useImageModal } from '../../General/ImageModalContext';
 import { useLikesAndComments } from '../../General/LikesAndCommentsContext';
 import { AuthContext } from '../../General/AuthProvider';
 import Comments from '../News Feed/Comments';
+import { useLocation } from 'react-router-dom';
 
 function Post() {
   const { postID } = useParams();
+  const location = useLocation();
   const [post, setPost] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,6 +25,7 @@ function Post() {
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isLiked, setIsLiked] = useState(false);
+  const { notifType } = location.state || {};
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -81,13 +84,36 @@ function Post() {
   }, [db, user, postID]);
 
 
-  if(loading){
-    return <p className='bg-secondary py-3 rounded-md shadow-custom w-full text-center'>Loading post ...</p>
+  useEffect(() => {
+    if(notifType === 'comment'){
+      setIsCommentOpen(true);
+      setSelectedPost(postID)
+    }
+  }, [notifType, postID]);
+
+  const toggleLike = (postID) => {
+    if (isLiked) {
+        handleUnlike(postID, user.uid);
+        setLikedPosts({ ...likedPosts, [postID]: false});
+        setIsLiked(false);
+        
+    } 
+    else {
+        handleLike(postID, user.uid, userData.fullName);
+        setLikedPosts({ ...likedPosts, [postID]: true});
+        setIsLiked(true);
+    }
+  };
+
+  const openComment = () => {
+    setIsCommentOpen(!isCommentOpen);
+    setSelectedPost(postID)
+  }
+  const closeComment = () => {
+      setIsCommentOpen(!isCommentOpen);
+      setSelectedPost(null)
   }
 
-  if(error){
-    return <p className='bg-secondary py-3 rounded-md shadow-custom w-full text-center'>{error}</p>
-  }
 
   const getTimeDifference = (timestamp) => {
     const now = new Date();
@@ -117,32 +143,14 @@ function Post() {
     }
   };
 
-
-  const toggleLike = (postID) => {
-    if (isLiked) {
-        handleUnlike(postID, user.uid);
-        setLikedPosts({ ...likedPosts, [postID]: false});
-        setIsLiked(false);
-        
-    } 
-    else {
-        handleLike(postID, user.uid, userData.fullName);
-        setLikedPosts({ ...likedPosts, [postID]: true});
-        setIsLiked(true);
-    }
-  };
-
-  console.log(likedPosts)
-
-
-  const openComment = () => {
-    setIsCommentOpen(!isCommentOpen);
-    setSelectedPost(postID)
+  if(loading){
+    return <p className='bg-secondary py-3 rounded-md shadow-custom w-full text-center'>Loading post ...</p>
   }
-  const closeComment = () => {
-      setIsCommentOpen(!isCommentOpen);
-      setSelectedPost(null)
+
+  if(error){
+    return <p className='bg-secondary py-3 rounded-md shadow-custom w-full text-center'>{error}</p>
   }
+
 
   return (
     <div className='pt-36 relative lg:pt-20 lg:pl-48 xl:pl-56 lg:pr-3 lg:ml-4 flex flex-col font-poppins text-text'>

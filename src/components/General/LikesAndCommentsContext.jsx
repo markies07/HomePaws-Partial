@@ -13,6 +13,7 @@ export const useLikesAndComments = () => {
 
 export const LikesAndCommentsProvider = ({children}) => {
     const { user, userData } = useContext(AuthContext);
+    const [loading, setLoading] = useState(true);
 
     // HANDLING LIKE CLICK
     const handleLike = async (postId, likerId, likerName) => {
@@ -284,37 +285,45 @@ export const LikesAndCommentsProvider = ({children}) => {
         } catch (error) {
             notifyErrorOrange("Failed posting comment. Please try again.");
             throw error;
-        }
+        } 
     };
     
     const fetchComments = async (postId) => {
-        const q = query(collection(db, 'comments'), where('postId', '==', postId), orderBy('commentedAt', 'desc'));
-        const commentsSnapshot = await getDocs(q);
-        const commentsWithUserProfile = [];
-
-        for (const commentDoc of commentsSnapshot.docs) {
-            const commentData = commentDoc.data();
-            const userId = commentData.userId;
-
-            // Fetch the user's profile from 'users' collection
-            const userRef = doc(db, 'users', userId);
-            const userSnapshot = await getDoc(userRef);
-
-            if (userSnapshot.exists()) {
-                const userData = userSnapshot.data();
-                commentsWithUserProfile.push({
-                    ...commentData,
-                    id: commentDoc.id,
-                    fullName: userData.fullName || 'Unknown User',  // Default if missing
-                    profilePicture: userData.profilePictureURL || defaultPic, // Default if missing
-                    commentedAt: commentData.commentedAt,
-                });
-            } else {
-                console.log('User profile not found!');
+        try{
+            setLoading(true);
+            const q = query(collection(db, 'comments'), where('postId', '==', postId), orderBy('commentedAt', 'desc'));
+            const commentsSnapshot = await getDocs(q);
+            const commentsWithUserProfile = [];
+    
+            for (const commentDoc of commentsSnapshot.docs) {
+                const commentData = commentDoc.data();
+                const userId = commentData.userId;
+    
+                // Fetch the user's profile from 'users' collection
+                const userRef = doc(db, 'users', userId);
+                const userSnapshot = await getDoc(userRef);
+    
+                if (userSnapshot.exists()) {
+                    const userData = userSnapshot.data();
+                    commentsWithUserProfile.push({
+                        ...commentData,
+                        id: commentDoc.id,
+                        fullName: userData.fullName || 'Unknown User',  // Default if missing
+                        profilePicture: userData.profilePictureURL || defaultPic, // Default if missing
+                        commentedAt: commentData.commentedAt,
+                    });
+                } else {
+                    console.log('User profile not found!');
+                }
             }
+        return commentsWithUserProfile;
         }
-
-    return commentsWithUserProfile;
+        catch(error){
+            console.log(error);
+        }
+        finally{
+            setLoading(false);
+        }
     };
 
 
@@ -322,7 +331,8 @@ export const LikesAndCommentsProvider = ({children}) => {
         handleLike,
         handleUnlike,
         handleComment,
-        fetchComments
+        fetchComments,
+        loading
     }
 
     return (

@@ -10,6 +10,7 @@ import { db, storage } from '../../../firebase/firebase'
 import { notifyErrorOrange } from '../../General/CustomToast'
 import { confirm } from '../../General/CustomAlert'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import { useImageModal } from '../../General/ImageModalContext'
 
 function Conversation() {
     const navigate = useNavigate();
@@ -21,43 +22,55 @@ function Conversation() {
     const [newMessage, setNewMessage] = useState('');
     const imageInputRef = useRef(null);
     const [imageUrl, setImageUrl] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const { showModal } = useImageModal();
 
     // FETCHING MESSAGES
     useEffect(() => {
+        setLoading(true);
         if (!chatID) return;
-    
-        const fetchOtherUser = async () => {
-            const chatRef = doc(db, 'chats', chatID);
-            const chatDoc = await getDoc(chatRef);
-    
-            if (chatDoc.exists()) {
-                const chatData = chatDoc.data();
-                const otherUserID = chatData.participants.find(uid => uid !== user.uid);
-    
-                if (otherUserID) {
-                    const otherUserRef = doc(db, 'users', otherUserID);
-                    const otherUserDoc = await getDoc(otherUserRef);
-    
-                    if (otherUserDoc.exists()) {
-                        setOtherUser(otherUserDoc.data());
+
+        try{
+            const fetchOtherUser = async () => {
+                const chatRef = doc(db, 'chats', chatID);
+                const chatDoc = await getDoc(chatRef);
+        
+                if (chatDoc.exists()) {
+                    const chatData = chatDoc.data();
+                    const otherUserID = chatData.participants.find(uid => uid !== user.uid);
+        
+                    if (otherUserID) {
+                        const otherUserRef = doc(db, 'users', otherUserID);
+                        const otherUserDoc = await getDoc(otherUserRef);
+        
+                        if (otherUserDoc.exists()) {
+                            setOtherUser(otherUserDoc.data());
+                        }
                     }
                 }
-            }
-        };
+            };
+        
+            fetchOtherUser();
     
-        fetchOtherUser();
-    
-        const q = query(
-            collection(db, 'chats', chatID, `messages_${user.uid}`),
-            orderBy('sentAt')
-        );
-    
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const fetchedMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setMessages(fetchedMessages);
-        });
-    
-        return () => unsubscribe();
+        
+            const q = query(
+                collection(db, 'chats', chatID, `messages_${user.uid}`),
+                orderBy('sentAt')
+            );
+        
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const fetchedMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setMessages(fetchedMessages);
+            });
+            return () => unsubscribe();
+        }
+        catch(error){
+            console.log(error);
+        }
+        finally{
+            setLoading(false);
+        }
+        
     }, [chatID]);
     
     // For sending messages
@@ -69,7 +82,15 @@ function Conversation() {
         const otherUserID = chatData.participants.find(uid => uid !== user.uid);
         
         try {
-            const message = {
+            const message1 = {
+                sender: user.uid,
+                text: newMessage || '', // Use text if available
+                sentAt: serverTimestamp(),
+                read: true,
+                image: imageUrl || null // Add the image URL if provided
+            };
+
+            const message2 = {
                 sender: user.uid,
                 text: newMessage || '', // Use text if available
                 sentAt: serverTimestamp(),
@@ -80,8 +101,8 @@ function Conversation() {
             const messagesRefUser1 = collection(db, 'chats', chatID, `messages_${user.uid}`);
             const messagesRefUser2 = collection(db, 'chats', chatID, `messages_${otherUserID}`);
     
-            await addDoc(messagesRefUser1, message);
-            await addDoc(messagesRefUser2, message);
+            await addDoc(messagesRefUser1, message1);
+            await addDoc(messagesRefUser2, message2);
     
             await updateDoc(chatRef, {
                 latestMessage: {
@@ -194,6 +215,7 @@ function Conversation() {
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
+    
 
     return (
         <div className='w-full h-full flex flex-col font-poppins'>
@@ -209,14 +231,19 @@ function Conversation() {
                 {/* MESSAGES */}
                 <div className='p-4 flex flex-col overflow-y-auto max-h-[calc(100dvh-301px)] md:max-h-[calc(100dvh-335px)] lg:max-h-[calc(100dvh-274px)] gap-3 flex-grow h-full'>
 
-                {messages.map((message) => (
+                {loading ? (
+                    <div className="flex justify-center items-center h-full">
+                        <p className="text-gray-500">Loading messages...</p>
+                    </div>
+                ) :
+                messages.map((message) => (
                     message.sender === user.uid ? (
                         // RECIEVER
                         <div key={message.id} className='flex w-full justify-end'>
                             {/* MESSAGE */}
                             <div className='w-[60%] flex justify-end'>
                                 {message.image ? ( // Check if there's an image
-                                    <img src={message.image} alt="sent" className='max-w-full rounded-lg mb-2' />
+                                    <img src={message.image} onClick={() => showModal(message.image)} alt="sent" className='max-w-full cursor-pointer rounded-lg mb-2' />
                                 ) : (
                                     <p className='bg-primary w-fit py-2 px-3 rounded-2xl rounded-br-none text-white'>{message.text}</p>
                                 )}
@@ -232,7 +259,7 @@ function Conversation() {
                             {/* MESSAGE */}
                             <div className='w-[60%]'>
                                 {message.image ? ( // Check if there's an image
-                                    <img src={message.image} alt="received" className='max-w-full rounded-lg mb-2' />
+                                    <img src={message.image} onClick={() => showModal(message.image)} alt="received" className='max-w-full cursor-pointer rounded-lg mb-2' />
                                 ) : (
                                     <p className='bg-text w-fit py-2 px-3 rounded-2xl rounded-bl-none text-white'>{message.text}</p>
                                 )}

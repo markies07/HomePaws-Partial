@@ -13,11 +13,13 @@ function Notification() {
     const [notifications, setNotifications] = useState([]);
     const [marOpen, setMarOpen] = useState(false);
     const [isUnreadSelected, setIsUnreadSelected] = useState(false);
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchNotifications = async () => {
             try {
+                setLoading(true)
                 const notificationsRef = query(
                     collection(db, 'notifications'),
                     where('userId', '==', user.uid),
@@ -31,8 +33,12 @@ function Notification() {
                 }));
     
                 setNotifications(userNotifications);
-            } catch (error) {
+            } 
+            catch (error) {
                 console.log('Error: ', error);
+            }
+            finally{
+                setLoading(false);
             }
         };
         fetchNotifications();
@@ -120,13 +126,10 @@ function Notification() {
         })
 
         if(notifType === 'like'){
-            navigate(`post/${postID}`)
+            navigate(`post/${postID}`, {state: {notifType}});
         }
         else if(notifType === 'comment'){
-            navigate(`post/${postID}`)
-        }
-        else{
-            navigate(`post/${postID}`)
+            navigate(`post/${postID}`, {state: {notifType}});
         }
     }
 
@@ -149,7 +152,10 @@ function Notification() {
                     {/* NOTIFICATION */}
                     <div className='mt-4 flex flex-col gap-3'>
                         {/* Check if there are no notifications */}
-                        {displayedNotifications.length === 0 ? (
+                        {loading ? (
+                            <div className="text-center text-gray-500 font-medium py-5 bg-[#E9E9E9] rounded-md">Loading...</div>
+                        ) : 
+                        displayedNotifications.length === 0 ? (
                             <div className="text-center text-gray-500 font-medium py-5 bg-[#E9E9E9] rounded-md">No Notification</div>
                         ) : (
                             displayedNotifications.map((notification) => (

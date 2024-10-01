@@ -6,7 +6,7 @@ import { useLikesAndComments } from '../../General/LikesAndCommentsContext';
 
 function Comments({closeComment, postID, handleComment}) {
     const { user } = useContext(AuthContext);
-    const { fetchComments } = useLikesAndComments();
+    const { fetchComments, loading } = useLikesAndComments();
     const [commentText, setCommentText] = useState('');
     const [comments, setComments] = useState([]);
 
@@ -88,7 +88,12 @@ function Comments({closeComment, postID, handleComment}) {
 
 
                 {/* COMMENT BOX */}
-                {comments.length > 0 ? (
+                {loading ? (
+                    <div className='flex justify-center w-full h-full items-center'>
+                        <p className='font-medium'>Loading comments...</p>
+                    </div>
+                ) :
+                comments.length > 0 ? (
                     comments.map((comment, index) => (
                         <div key={index} className='mb-3 flex'>
                             {/* PROFILE PIC */}

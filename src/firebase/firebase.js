@@ -3,9 +3,8 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, 
 createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut,
 signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache } from "firebase/firestore"; // Updated import
 import { getStorage } from "firebase/storage";
-
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -21,10 +20,15 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+
+// Enable offline persistence for Firestore
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache()  // Enables offline persistence
+});
+
 const provider = new GoogleAuthProvider();
 const storage = getStorage(app);
 
 export { auth, provider, signInWithPopup, createUserWithEmailAndPassword,
   sendEmailVerification, onAuthStateChanged, getAuth, signOut,
-  signInWithEmailAndPassword, sendPasswordResetEmail, db, storage};
+  signInWithEmailAndPassword, sendPasswordResetEmail, db, storage };

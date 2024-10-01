@@ -15,7 +15,7 @@ import { useImageModal } from '../../General/ImageModalContext'
 function Posts() {
     const { user, userData } = useContext(AuthContext);
     const { showModal } = useImageModal();
-    const { posts } = useUserPosts();
+    const { posts, loading } = useUserPosts();
     const { handleLike, handleUnlike, handleComment } = useLikesAndComments();
     
     const [likedPosts, setLikedPosts] = useState({});
@@ -91,7 +91,11 @@ function Posts() {
 
     return (
         <>
-            {posts.length === 0 ? (
+            {loading ? (
+                <div className='py-3 text-center bg-secondary rounded-md shadow-custom font-medium'>Loading posts...</div>
+            ) :
+            
+            posts.length === 0 ? (
                 <div className='py-3 text-center bg-secondary rounded-md shadow-custom font-medium'>No posts available</div>
             ) : (
                 posts.map((post) => {
