@@ -16,7 +16,7 @@ function NewsFeed() {
   }
 
   return (
-    <div className='pt-36 lg:pt-20 lg:pl-48 z-30 xl:pl-[13.7rem] lg:pr-3 lg:ml-4 min-h-screen flex flex-col font-poppins text-text'>
+    <div className='pt-36 lg:pt-20 lg:pl-48 z-30 xl:pl-56 lg:pr-3 lg:ml-4 min-h-screen flex flex-col font-poppins text-text'>
       <div className='w-full h-full'>
         <div className='order-1 lg:order-2'>
           <Actions open={openCreatePost} />

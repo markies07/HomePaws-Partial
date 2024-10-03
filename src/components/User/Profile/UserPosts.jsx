@@ -1,29 +1,62 @@
 import React, { useContext, useEffect, useState } from 'react'
+import { AuthContext } from '../../General/AuthProvider';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../../firebase/firebase';
+import { useLikesAndComments } from '../../General/LikesAndCommentsContext';
+import { useImageModal } from '../../General/ImageModalContext';
+import Comments from '../News Feed/Comments';
 import unlike from './assets/unlike.svg'
 import like from './assets/like.svg'
 import comment from './assets/comment.svg'
-import message from './assets/message.svg'
-import { useUserPosts } from '../../General/UserPostsContext'
-import { AuthContext } from '../../General/AuthProvider'
-import { useLikesAndComments } from '../../General/LikesAndCommentsContext'
-import { addDoc, collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore'
-import { db } from '../../../firebase/firebase'
-import Comments from './Comments'
-import { useImageModal } from '../../General/ImageModalContext'
-import { useNavigate } from 'react-router-dom'
 
-
-function Posts() {
-    const { user, userData } = useContext(AuthContext);
-    const { showModal } = useImageModal();
-    const { posts, loading } = useUserPosts();
-    const { handleLike, handleUnlike, handleComment } = useLikesAndComments();
-    
+function UserPosts() {
+    const {user, userData} = useContext(AuthContext);
+    const [posts, setPosts] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [likedPosts, setLikedPosts] = useState({});
+    const { handleLike, handleUnlike, handleComment } = useLikesAndComments();
     const [isCommentOpen, setIsCommentOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState(null);
-    const navigate = useNavigate();
+    const { showModal } = useImageModal();
 
+    useEffect(() => {
+        const fetchUserPosts = async () => {
+            try{
+                setLoading(true);
+
+                if(user){
+                    const postsRef = collection(db, 'userPosts');
+                    const q = query(postsRef, where('userID', '==', user.uid));
+
+                    const querySnapshot = await getDocs(q);
+                    const userPosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                    setPosts(userPosts);
+                }
+            }
+            catch(error){
+                console.log(error);
+            }
+            finally{
+                setLoading(false);
+            }
+        }
+        
+        fetchUserPosts();
+    }, []);
+
+    const toggleLike = (postID) => {
+        const isLiked = likedPosts[postID];
+
+        if (isLiked) {
+            handleUnlike(postID, user.uid, userData.fullName);
+            setLikedPosts({ ...likedPosts, [postID]: false});
+            
+        } else {
+            handleLike(postID, user.uid, userData.fullName);
+            setLikedPosts({ ...likedPosts, [postID]: true});
+        }
+    };
 
     // FETCHING THE STATE OF LIKE POSTS
     useEffect(() => {
@@ -39,19 +72,14 @@ function Posts() {
         }
     }, [posts, user.uid]);
 
-
-    const toggleLike = (postID) => {
-        const isLiked = likedPosts[postID];
-
-        if (isLiked) {
-            handleUnlike(postID, user.uid, userData.fullName);
-            setLikedPosts({ ...likedPosts, [postID]: false});
-            
-        } else {
-            handleLike(postID, user.uid, userData.fullName);
-            setLikedPosts({ ...likedPosts, [postID]: true});
-        }
-    };
+    const openComment = (postID) => {
+        setIsCommentOpen(!isCommentOpen);
+        setSelectedPost(postID)
+    }
+    const closeComment = () => {
+        setIsCommentOpen(!isCommentOpen);
+        setSelectedPost(null)
+    }
 
     const getTimeDifference = (timestamp) => {
         const now = new Date();
@@ -81,48 +109,9 @@ function Posts() {
         }
       };
 
-    const openComment = (postID) => {
-        setIsCommentOpen(!isCommentOpen);
-        setSelectedPost(postID)
-    }
-    const closeComment = () => {
-        setIsCommentOpen(!isCommentOpen);
-        setSelectedPost(null)
-    }
-
-    const handleStartChat = async (receiver) => {
-
-        const q = query(
-            collection(db, 'chats'),
-            where('participants', 'array-contains', receiver)
-        );
-
-        const querySnapshot = await getDocs(q);
-        let existingChat = null;
-
-        querySnapshot.forEach(doc => {
-            const participants = doc.data().participants;
-            if(participants.includes(receiver)) {
-                existingChat = doc.id;
-            }
-        });
-
-        let chatID;
-        if(existingChat){
-            chatID = existingChat;
-        }
-        else{
-            const newChatRef = await addDoc(collection(db, 'chats'), {
-                participants: [user.uid, receiver],
-            })
-            chatID = newChatRef.id;
-        }
-        navigate(`/dashboard/chat/convo/${chatID}`);
-    }
-
 
     return (
-        <>
+        <div className='px-3 lg:px-0 rounded-md'>
             {loading ? (
                 <div className='py-3 text-center bg-secondary rounded-md shadow-custom font-medium'>Loading posts...</div>
             ) :
@@ -133,12 +122,11 @@ function Posts() {
                 posts.map((post) => {
                     const isLiked = likedPosts[post.id];
                     
-
                     return (
-                        <div key={post.id} className='bg-secondary w-full sm:rounded-lg shadow-custom py-4 px-5 md:px-7'>
+                        <div key={post.id} className='bg-secondary w-full rounded-md mb-3 sm:rounded-lg shadow-custom py-4 px-5 md:px-7'>
                             {/* USER INFORMATION */}
                             <div className='flex w-full'>
-                                <img src={post.userProfileImage} className='w-10 h-10 bg-[#D9D9D9] rounded-full' />
+                                <img src={userData.profilePictureURL} className='w-10 h-10 bg-[#D9D9D9] rounded-full' />
                                 <div className='ml-2'>
                                     <p className='font-medium'>{post.userName} <span className='text-xs sm:text-sm sm:px-3 font-normal ml-1 text-white rounded-full px-2' style={{backgroundColor: post.typeOfPost === 'story' ? '#A87CCD' : post.typeOfPost === 'missing' ? '#ED5050' : '#85B728'}}>{post.typeOfPost}</span></p>
                                     <p className='-mt-[3px] text-xs'>{getTimeDifference(post.createdAt)}</p>
@@ -153,7 +141,7 @@ function Posts() {
                             {/* IMAGES */}
                             <div className='flex gap-2 md:gap-3 justify-center mt-2 object-cover sm:w-[80%] sm:mx-auto'>
                             {post.images && post.images.length > 0 && ( 
-                                post.images.map((img, index) => <img src={img} key={index} onClick={() => showModal(img)} className='w-full cursor-pointer object-cover overflow-hidden max-w-40 h-48 md:h-52 bg-[#D9D9D9] rounded-md' />
+                                post.images.map((img, index) => <img src={img} key={index} onClick={() => showModal(img)} className='w-full cursor-pointer object-cover overflow-hidden max-w-40 xl:max-w-52 h-48 md:h-52 xl:h-72 bg-[#D9D9D9] rounded-md' />
                             ))}
                             </div>
 
@@ -177,7 +165,7 @@ function Posts() {
                             </div>
 
                             {/* USER INTERACTIONS */}
-                            <div className='w-full gap-7 sm:gap-16 xl:gap-20 flex justify-center '>
+                            <div className='w-full gap-14 sm:gap-20 lg:gap-32 flex justify-center'>
                                 <div onClick={() => toggleLike(post.id)} className='flex items-center cursor-pointer'>
                                     <img className='w-6' src={isLiked ? like : unlike} alt="" />
                                     <p className={`font-semibold pl-1 sm:pl-2 text-sm ${isLiked ? 'text-primary' : ''}`}>Like</p>
@@ -185,10 +173,6 @@ function Posts() {
                                 <div onClick={() => openComment(post.id)} className='flex items-center cursor-pointer'>
                                     <img className='w-[21px]' src={comment} alt="" />
                                     <p className='font-semibold pl-1 sm:pl-2 text-sm'>Comment</p>
-                                </div>
-                                <div onClick={() => handleStartChat(post.userID)} className='flex items-center cursor-pointer'>
-                                    <img className='w-5' src={message} alt="" />
-                                    <p className='font-semibold pl-1 sm:pl-2 text-sm'>Message</p>
                                 </div>
                             </div>
 
@@ -199,8 +183,8 @@ function Posts() {
                     )
                 })
             )}
-        </>
+        </div>
     )
 }
 
-export default Posts
+export default UserPosts

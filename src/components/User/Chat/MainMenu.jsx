@@ -23,28 +23,33 @@ function MainMenu() {
     const [isnewMessage, setIsNewMessage] = useState(false);
     const [openUsers, setOpenUsers] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [noChats, setNoChats] = useState(false);
 
     // CLEAN UP CHATS WITHOUT MESSAGES
     const cleanUpEmptyChats = async () => {
-        try {
-            const chatQuery = collection(db, 'chats');
-            const chatSnapshot = await getDocs(chatQuery);
-    
-            for (const chatDoc of chatSnapshot.docs) {
-                const chatID = chatDoc.id;
-                const chatData = chatDoc.data();
-    
-                // Check if there's no latestMessage field
-                if (!chatData.latestMessage) {
-                    await deleteDoc(doc(db, 'chats', chatID));
-                    console.log(`Deleted chat with ID: ${chatID} because it has no latestMessage.`);
+        if(isConvoOpen === false){
+            try {
+                const chatQuery = collection(db, 'chats');
+                const chatSnapshot = await getDocs(chatQuery);
+        
+                for (const chatDoc of chatSnapshot.docs) {
+                    const chatID = chatDoc.id;
+                    const chatData = chatDoc.data();
+        
+                    // Check if there's no latestMessage field
+                    if (!chatData.latestMessage) {
+                        await deleteDoc(doc(db, 'chats', chatID));
+                        console.log(`Deleted chat with ID: ${chatID} because it has no latestMessage.`);
+                    }
                 }
+            } catch (error) {
+                console.error('Error cleaning up chats:', error);
             }
-        } catch (error) {
-            console.error('Error cleaning up chats:', error);
         }
     };
+        
     
+
     useEffect(() => {
         const cleanupChats = async () => {
             await cleanUpEmptyChats();
@@ -80,6 +85,7 @@ function MainMenu() {
                 }))
                 
                 setChats(chatWithUnreadStatus);
+                
     
                 const participantIds = [...new Set(fetchedChats.flatMap(chat => chat.participants))];
                 
@@ -114,12 +120,12 @@ function MainMenu() {
             finally{
                 setLoading(false);
             }
+        
 
         });
 
         return () => unsubscribe();
     }, [user.uid]);
-
 
     useEffect(() => {
         const filtered = chats.filter(chat => {
@@ -128,6 +134,12 @@ function MainMenu() {
             return otherUser && otherUser.fullName.toLowerCase().includes(searchTerm.toLowerCase());
         });
         setFilteredChats(filtered);
+        if(chats.length === 0){
+            setNoChats(true);
+        }
+        else{
+            setNoChats(false);
+        }
     }, [searchTerm, chats, usersData, user.uid]);
 
 
@@ -136,8 +148,6 @@ function MainMenu() {
     }
 
     const updateChatStatus = (chatID, unreadStatus) => {
-        // Update your local state here
-        // This could be using React's setState or a state management library like Redux
         setChats(prevChats => prevChats.map(chat => 
             chat.id === chatID ? { ...chat, hasUnread: unreadStatus } : chat
         ));
@@ -161,7 +171,6 @@ function MainMenu() {
         navigate(`convo/${chatID}`)            
     }
 
-
     return (
         <div className={`font-poppins relative flex mt-3 lg:mt-4 bg-secondary sm:mx-auto lg:mx-0 flex-grow mb-3 w-full lg:p-4 text-text sm:w-[90%] md:w-[97%] lg:w-full sm:rounded-md lg:rounded-lg shadow-custom`}>
             <div className={`py-4 px-5 lg:p-0 w-full md:max-w-[21rem] lg:max-w-[19rem] xl:max-w-[20rem] ${isConvoOpen ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
@@ -182,7 +191,13 @@ function MainMenu() {
                                 <p className='font-medium text-lg'>Loading chats...</p>
                             </div>
                         ) :
-                        filteredChats.length > 0 ? (
+                        noChats ? (
+                            <div className="text-center text-gray-500 h-screen flex flex-col px-5 items-center justify-center bg-[#E9E9E9] rounded-lg">
+                                <img className='mb-3 w-20' src={inbox} alt="" />
+                                <p className='font-medium text-lg'>No messages, yet.</p>
+                                <p className='text-sm text-[#979797]'>Start chatting with other people.</p>
+                            </div>
+                        ) : (
                             filteredChats.map((chat) => {
                             const otherParticipantId = chat.participants.find(p => p !== user.uid);
                             const otherUser = usersData[otherParticipantId];
@@ -204,12 +219,6 @@ function MainMenu() {
                                     </div>
                                 )
                             })
-                        ) : (
-                            <div className="text-center text-gray-500 h-screen flex flex-col px-5 items-center justify-center bg-[#E9E9E9] rounded-lg">
-                                <img className='mb-3 w-20' src={inbox} alt="" />
-                                <p className='font-medium text-lg'>No messages, yet.</p>
-                                <p className='text-sm text-[#979797]'>Start chatting with other people.</p>
-                            </div>
                         )}
                             
                     </div>

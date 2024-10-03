@@ -135,13 +135,4 @@ function Comments({closeComment, postID, handleComment}) {
 
 export default Comments
 
-
-// const handleCommentSubmit = async () => {
-//     if (commentText.trim() !== "") {
-//       await addComment(postID, commentText, user.uid);
-//       setCommentText(""); 
-//       const updatedComments = await getCommentsForPost(postID);
-//       setComments(updatedComments); 
-//     }
-//   };
   
