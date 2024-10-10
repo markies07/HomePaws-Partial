@@ -17,7 +17,7 @@ function Actions({open}) {
     };
 
     return (
-        <div className='mt-3 px-2 lg:fixed top-24 lg:mt-0 right-1'>
+        <div className='mt-3 px-2 lg:fixed lg:mt-3 top-20 right-1'>
 
             {/* MOBILE VIEW */}
             <div className='flex gap-2 sm:gap-3 lg:flex-col justify-center'>

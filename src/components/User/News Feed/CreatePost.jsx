@@ -68,7 +68,7 @@ function CreatePost({closeWindow, postType}) {
             setImages([]);
             setTimeout(() => {
                 window.location.reload();
-            }, 2500);
+            }, 2000);
         }
         catch(error){
             console.error('Error creating post: ', error);

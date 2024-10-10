@@ -131,7 +131,7 @@ function PostPet({closePostPet}) {
 
 
     return (
-        <div className='w-full h-full lg:pb-4 my-4'>
+        <div className='w-full h-full my-3 lg:my-4'>
             <div className='relative px-4 pb-5 bg-secondary lg:rounded-lg shadow-custom w-full h-full'>
                 <img onClick={closePostPet} className='absolute border-2 border-secondary hover:border-text duration-150 cursor-pointer p-1 top-3 right-3' src={close} alt="" />
                 <p className='text-center font-medium text-3xl pt-12'>Post Pet for Adoption</p>
@@ -187,17 +187,17 @@ function PostPet({closePostPet}) {
                     </div>
                     <div className='flex flex-col xl:flex-row xl:gap-3'>
                         <div className='flex w-full items-center mb-5 gap-3'>
-                            <div className='w-[60%]'>
+                            <div className='w-[50%]'>
                                 <p className='font-semibold'>Pet Name</p>
                                 <input required name="petName" value={formData.petName} onChange={handleInputChange} className='py-1 outline-none capitalize w-full px-2 border-2 border-text rounded-md' type="text" id="" />
                             </div>
-                            <div className='flex flex-col w-[40%]'>
+                            <div className='flex flex-col w-[50%]'>
                                 <p className='font-semibold'>Age</p>
                                 <select name="age" value={formData.age} onChange={handleInputChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
-                                    <option className="text-text py-2" value="Kitty/Puppy">Kitty/Puppy</option>
-                                    <option className="text-text py-2" value="Young">Young</option>
-                                    <option className="text-text py-2" value="Adult">Adult</option>
-                                    <option className="text-text py-2" value="Senior">Senior</option>
+                                    <option className="text-text py-2" value="Kitty/Puppy">Kitty/Puppy (1 - 6 months)</option>
+                                    <option className="text-text py-2" value="Young">Young (6 months - 2 years)</option>
+                                    <option className="text-text py-2" value="Adult">Adult (2 - 7 years)</option>
+                                    <option className="text-text py-2" value="Senior">Senior (7 years and older)</option>
                                 </select>
                             </div>
                         </div>

@@ -26,6 +26,7 @@ function AdoptionForm() {
         experienceWithPets: '',
         typeOfResidence: 'House',
         occupation: '',
+        salaryRange: '',
         commitment: '', 
     });
 
@@ -45,6 +46,7 @@ function AdoptionForm() {
             petID: petID,
             adopterUserID: user.uid,
             petOwnerID: pet.userID,
+            read: false,
           }));
         }
     }, [pet, userData]);
@@ -121,7 +123,7 @@ function AdoptionForm() {
         <div className='pt-40 lg:pt-24 lg:pl-48 xl:pl-56 lg:pr-3 lg:ml-4 min-h-screen flex flex-col font-poppins text-text'>
             <div className='relative px-4 pb-5 bg-[#E9E9E9] sm:w-[97%] lg:w-full mx-auto mb-4 sm:rounded-lg shadow-custom w-full h-full'>
                 <img onClick={() => window.history.back()} className='absolute border-2 border-[#E9E9E9] hover:border-text duration-150 cursor-pointer p-1 top-3 right-3' src={close} alt="" />
-                <h1 className='text-3xl font-medium text-center pt-12 pb-7'>Adoption Application</h1>
+                <h1 className='text-2xl sm:text-3xl font-semibold text-center pt-12 pb-7'>Adoption Application</h1>
                 
                 {/* FORM */}
                 <form onSubmit={handleSubmit} className='w-full flex flex-col max-w-[35rem] xl:max-w-[40rem] mx-auto'>
@@ -189,7 +191,7 @@ function AdoptionForm() {
                     <div className='w-full flex gap-2 pb-4'>
                         <div className='w-full'>
                             <p className='font-semibold'>Experience with pets</p>
-                            <input required name="experienceWithPets" value={formData.experienceWithPets || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="text" id="" />
+                            <input required name="experienceWithPets" value={formData.experienceWithPets || ''} onChange={handleChange} className='py-1 bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' placeholder='(e.g., Did you ever have a pet before?)' type="text" id="" />
                         </div>
                     </div>
                     <div className='w-full flex gap-2 pb-4'>
@@ -209,8 +211,19 @@ function AdoptionForm() {
                     </div>
                     <div className='w-full flex gap-2 pb-4'>
                         <div className='w-full'>
-                            <p className='font-semibold'>Commitment to taking care of the pet</p>
-                            <textarea required name="commitment" value={formData.commitment || ''} onChange={handleChange} className='py-1 w-full h-20 px-2 border-2 border-text rounded-md' placeholder='(e.g., Work schedule, who will care for the pet)'></textarea>
+                            <p className='font-semibold'>Salary range</p>
+                            <select name="salaryRange" value={formData.salaryRange || ''} onChange={handleChange} className="border-text rounded-md sm:text-base w-full py-1 px-1 outline-none font-medium text-text border-2">
+                                <option className="text-text py-2" value="Less than Php 10,000">Less than Php 10,000</option>
+                                <option className="text-text py-2" value="Php 10,000 - 30,000">Php 10,000 - 30,000</option>
+                                <option className="text-text py-2" value="Php 30,000 - 50,000">Php 30,000 - 50,000</option>
+                                <option className="text-text py-2" value="More than Php 50,000">More than Php 50,000</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className='w-full flex gap-2 pb-4'>
+                        <div className='w-full'>
+                            <p className='font-semibold'>Commitment</p>
+                            <textarea required name="commitment" value={formData.commitment || ''} onChange={handleChange} className='py-1 w-full h-20 px-2 border-2 border-text rounded-md' placeholder='(e.g., Prove that you will take care of the pet.)'></textarea>
                         </div>
                     </div>
                     <div className='flex justify-center py-3'>

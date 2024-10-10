@@ -127,7 +127,7 @@ function NavBar() {
       </div>
 
       {/* DESKTOP VIEW */}
-      <div className='hidden lg:block fixed top-24'>
+      <div className='hidden lg:block fixed top-[5.75rem]'>
         <div className='bg-secondary min-h-screen pt-7 flex flex-col items-center rounded-tr-lg gap-5 shadow-xl px-3 xl:w-56 text-text font-semibold'>
         
           {/* FIND PET */}

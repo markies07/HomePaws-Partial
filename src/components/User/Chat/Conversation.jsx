@@ -229,7 +229,7 @@ function Conversation() {
                 </div>
 
                 {/* MESSAGES */}
-                <div className='p-4 flex flex-col overflow-y-auto max-h-[calc(100dvh-301px)] md:max-h-[calc(100dvh-335px)] lg:max-h-[calc(100dvh-274px)] gap-3 flex-grow h-full'>
+                <div className='p-4 flex flex-col overflow-y-auto max-h-[calc(100dvh-295px)] md:max-h-[calc(100dvh-327px)] lg:max-h-[calc(100dvh-265px)] gap-3 flex-grow h-full'>
 
                 {loading ? (
                     <div className="flex justify-center items-center h-full">

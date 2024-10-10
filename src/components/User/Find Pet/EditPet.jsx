@@ -115,7 +115,7 @@ function EditPet({pet, closeEdit}) {
         <div className='w-full h-full lg:pb-4 mt-4'>
             <div className='relative px-4 pb-5 bg-secondary lg:rounded-lg shadow-custom w-full h-full'>
                 <img onClick={closeEdit} className='absolute border-2 border-secondary hover:border-text duration-150 cursor-pointer p-1 top-3 right-3' src={close} alt="" />
-                <p className='text-center font-medium text-3xl pt-12'>Edit Pet Information</p>
+                <p className='text-center font-semibold text-2xl sm:text-3xl pt-12'>Edit Pet Information</p>
                 <div className='max-w-[35rem] pb-5 mx-auto flex pt-5 gap-3 sm:gap-5 xl:gap-7'>
                     {newPetImages.length > 0 ? newPetImages.map((file, index) => (
                         <div key={index} className='bg-[#BCBCBC] rounded-md h-44 sm:h-48 w-full flex justify-center'>

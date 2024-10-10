@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { AuthContext } from '../../General/AuthProvider';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/firebase';
 import { useLikesAndComments } from '../../General/LikesAndCommentsContext';
 import { useImageModal } from '../../General/ImageModalContext';
@@ -8,6 +8,11 @@ import Comments from '../News Feed/Comments';
 import unlike from './assets/unlike.svg'
 import like from './assets/like.svg'
 import comment from './assets/comment.svg'
+import deletePost from './assets/delete.svg'
+import close from './assets/small-close.svg'
+import settings from './assets/settings.svg'
+import { confirm } from '../../General/CustomAlert';
+import { notifyErrorOrange, notifySuccessOrange } from '../../General/CustomToast';
 
 function UserPosts() {
     const {user, userData} = useContext(AuthContext);
@@ -17,6 +22,7 @@ function UserPosts() {
     const { handleLike, handleUnlike, handleComment } = useLikesAndComments();
     const [isCommentOpen, setIsCommentOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState(null);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(null);
     const { showModal } = useImageModal();
 
     useEffect(() => {
@@ -107,7 +113,37 @@ function UserPosts() {
         } else {
           return `${seconds} seconds ago`;
         }
-      };
+    };
+
+    const toggleSettings = (postID) => {
+        if(isSettingsOpen === postID){
+            setIsSettingsOpen(null);
+        }
+        else{
+            setIsSettingsOpen(postID);
+        }  
+    }
+
+    const deleteThisPost = async (postID) => {
+        confirm(`Deleting Post`, `Are you sure you want to delete this post?`).then(async (result) => {
+            if(result.isConfirmed){
+                try{
+                    await deleteDoc(doc(db, 'userPosts', postID));
+                    notifySuccessOrange(`Your post has been deleted.`);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                }
+                catch(error) {
+                    console.error(error);
+                    notifyErrorOrange('There was an issue deleting this post. Please try again.');
+                }
+            }
+            else{
+                setIsSettingsOpen(null);
+            }
+        })
+    }
 
 
     return (
@@ -123,7 +159,17 @@ function UserPosts() {
                     const isLiked = likedPosts[post.id];
                     
                     return (
-                        <div key={post.id} className='bg-secondary w-full rounded-md mb-3 sm:rounded-lg shadow-custom py-4 px-5 md:px-7'>
+                        <div key={post.id} className='bg-secondary relative w-full rounded-md mb-3 sm:rounded-lg shadow-custom py-4 px-5 md:px-7'>
+                            {/* SETTINGS */}
+                            <img onClick={() => toggleSettings(post.id)} className='absolute cursor-pointer top-0 py-3 px-2 sm:px-3 right-0' src={isSettingsOpen === post.id ? close : settings} alt="" />
+                            <div className={`${isSettingsOpen === post.id ? 'block' : 'hidden'} absolute top-10 p-1 rounded-lg right-4 bg-white shadow-custom`}>
+                                <div onClick={() => deleteThisPost(post.id)} className='px-5 flex py-2 cursor-pointer hover:bg-[#e6e6e6] duration-150 items-center gap-3'>
+                                    <img className='w-[22px]' src={deletePost} alt="" />
+                                    <p className='font-medium'>Delete Post</p>
+                                </div>
+                            </div>
+                            
+                            
                             {/* USER INFORMATION */}
                             <div className='flex w-full'>
                                 <img src={userData.profilePictureURL} className='w-10 h-10 bg-[#D9D9D9] rounded-full' />

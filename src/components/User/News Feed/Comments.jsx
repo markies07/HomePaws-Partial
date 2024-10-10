@@ -4,7 +4,7 @@ import postComment from './assets/post-comment.svg'
 import { AuthContext } from '../../General/AuthProvider';
 import { useLikesAndComments } from '../../General/LikesAndCommentsContext';
 
-function Comments({closeComment, postID, handleComment}) {
+function Comments({closeComment, postID, handleComment, post}) {
     const { user } = useContext(AuthContext);
     const { fetchComments, loading } = useLikesAndComments();
     const [commentText, setCommentText] = useState('');
@@ -79,7 +79,7 @@ function Comments({closeComment, postID, handleComment}) {
     
     
   return (
-    <div className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-25">
+    <div className={`fixed inset-0 flex justify-center items-center z-50 ${post ? 'bg-black/60' : ' bg-black/25'}`}>
         <div className="relative bg-[#d8d8d8] w-[90%] sm:w-[30rem] h-[65%] rounded-lg py-3 flex flex-col">
             <img onClick={closeComment} className='w-9 p-1 border-2 border-transparent hover:border-text duration-150 absolute top-2 right-2 cursor-pointer' src={close} alt="" />
             <h1 className='text-center shrink-0 text-2xl font-semibold pt-5 mb-4'>Comments</h1>

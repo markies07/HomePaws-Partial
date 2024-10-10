@@ -2,15 +2,22 @@ import React, { useContext, useEffect, useState } from 'react'
 import unlike from './assets/unlike.svg'
 import like from './assets/like.svg'
 import comment from './assets/comment.svg'
+import settings from './assets/settings.svg'
 import message from './assets/message.svg'
 import { useUserPosts } from '../../General/UserPostsContext'
 import { AuthContext } from '../../General/AuthProvider'
 import { useLikesAndComments } from '../../General/LikesAndCommentsContext'
-import { addDoc, collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore'
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import Comments from './Comments'
 import { useImageModal } from '../../General/ImageModalContext'
 import { useNavigate } from 'react-router-dom'
+import reportPost from './assets/report.svg'
+import deletePost from './assets/delete.svg'
+import close from './assets/close.svg'
+import Report from './Report'
+import { confirm } from '../../General/CustomAlert'
+import { notifyErrorOrange, notifySuccessOrange } from '../../General/CustomToast'
 
 
 function Posts() {
@@ -21,7 +28,9 @@ function Posts() {
     
     const [likedPosts, setLikedPosts] = useState({});
     const [isCommentOpen, setIsCommentOpen] = useState(false);
+    const [isReportOpen, setIsReportOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState(null);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(null);
     const navigate = useNavigate();
 
 
@@ -79,8 +88,9 @@ function Posts() {
         } else {
           return `${seconds} seconds ago`;
         }
-      };
+    };
 
+    // OPEN COMMENT
     const openComment = (postID) => {
         setIsCommentOpen(!isCommentOpen);
         setSelectedPost(postID)
@@ -88,6 +98,17 @@ function Posts() {
     const closeComment = () => {
         setIsCommentOpen(!isCommentOpen);
         setSelectedPost(null)
+    }
+
+    // OPEN REPORT
+    const openReport = (postID) => {
+        setIsReportOpen(!isReportOpen);
+        setSelectedPost(postID);
+    }
+    const closeReport = () => {
+        setIsReportOpen(!isReportOpen);
+        setSelectedPost(null);
+        setIsSettingsOpen(null);
     }
 
     const handleStartChat = async (receiver) => {
@@ -120,6 +141,36 @@ function Posts() {
         navigate(`/dashboard/chat/convo/${chatID}`);
     }
 
+    const toggleSettings = (postID) => {
+        if(isSettingsOpen === postID){
+            setIsSettingsOpen(null);
+        }
+        else{
+            setIsSettingsOpen(postID);
+        }  
+    }
+
+    const deleteThisPost = async (postID) => {
+        confirm(`Deleting Post`, `Are you sure you want to delete this post?`).then(async (result) => {
+            if(result.isConfirmed){
+                try{
+                    await deleteDoc(doc(db, 'userPosts', postID));
+                    notifySuccessOrange(`Your post has been deleted.`);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                }
+                catch(error) {
+                    console.error(error);
+                    notifyErrorOrange('There was an issue deleting this post. Please try again.');
+                }
+            }
+            else{
+                setIsSettingsOpen(null);
+            }
+        })
+    }
+
 
     return (
         <>
@@ -135,9 +186,24 @@ function Posts() {
                     
 
                     return (
-                        <div key={post.id} className='bg-secondary w-full sm:rounded-lg shadow-custom py-4 px-5 md:px-7'>
+                        <div key={post.id} className='bg-secondary relative w-full sm:rounded-lg shadow-custom py-5 px-5 md:px-7'>
+                            
+                            {/* SETTINGS */}
+                            <img onClick={() => toggleSettings(post.id)} className='absolute cursor-pointer top-0 py-3 px-2 sm:px-3 right-0' src={isSettingsOpen === post.id ? close : settings} alt="" />
+                            <div className={`${isSettingsOpen === post.id ? 'block' : 'hidden'} absolute top-10 p-1 rounded-lg right-4 bg-white shadow-custom`}>
+                                <div onClick={() => openReport(post.id)} style={{display: post.userID === user.uid ? 'none' : 'flex'}} className='px-5 py-2 cursor-pointer hover:bg-[#e6e6e6] duration-150 items-center gap-3'>
+                                    <img src={reportPost} alt="" />
+                                    <p className='font-medium'>Report Post</p>
+                                </div>
+                                <div onClick={() => deleteThisPost(post.id)} style={{display: post.userID === user.uid ? 'flex' : 'none'}} className='px-5 py-2 cursor-pointer hover:bg-[#e6e6e6] duration-150 items-center gap-3'>
+                                    <img className='w-[22px]' src={deletePost} alt="" />
+                                    <p className='font-medium'>Delete Post</p>
+                                </div>
+                            </div>
+
+                            
                             {/* USER INFORMATION */}
-                            <div className='flex w-full'>
+                            <div className='flex pb-1 w-full'>
                                 <img src={post.userProfileImage} className='w-10 h-10 bg-[#D9D9D9] rounded-full' />
                                 <div className='ml-2'>
                                     <p className='font-medium'>{post.userName} <span className='text-xs sm:text-sm sm:px-3 font-normal ml-1 text-white rounded-full px-2' style={{backgroundColor: post.typeOfPost === 'story' ? '#A87CCD' : post.typeOfPost === 'missing' ? '#ED5050' : '#85B728'}}>{post.typeOfPost}</span></p>
@@ -194,6 +260,11 @@ function Posts() {
 
                             <div className={isCommentOpen ? 'block' : 'hidden'}>
                                 <Comments postID={selectedPost} handleComment={handleComment} closeComment={closeComment} />
+                            </div>
+
+                            {/* REPORT */}
+                            <div className={isReportOpen ? 'block' : 'hidden'}>
+                                <Report postID={selectedPost} closeReport={closeReport} />
                             </div>
                         </div>
                     )

@@ -12,6 +12,7 @@ import Profile from "./components/User/Profile/Profile"
 import PetInfo from "./components/User/Find Pet/PetInfo"
 import AdoptionForm from "./components/User/Find Pet/AdoptionForm"
 import Notification from "./components/User/Notification/Notification"
+import Application from "./components/User/Profile/Application"
 import { UserDataProvider } from "./components/General/UserDataProvider"
 import { AdoptionDataProvider } from "./components/General/AdoptionDataProvider"
 import { UserPostsProvider } from "./components/General/UserPostsContext"
@@ -59,6 +60,8 @@ function App() {
 
                         {/* PROFILE SECTION */}
                         <Route path="profile" element={<Profile />} />
+                        <Route path="profile/application/:applicationID" element={<Application />} />
+
                       </Route>
                     </Route>
                   </Routes>

@@ -10,6 +10,7 @@ import { notifyErrorOrange, notifySuccessOrange } from '../../General/CustomToas
 import EditPet from './EditPet';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useImageModal } from '../../General/ImageModalContext';
+import FavoritePet from './FavoritePet';
 
 function PetInfo() {
     const { user } = useContext(AuthContext);
@@ -72,6 +73,7 @@ function PetInfo() {
           fetchPetData();
         }
       }, [petID]);
+      
 
       useEffect(() => {
         if (user && petID) {
@@ -107,9 +109,9 @@ function PetInfo() {
         }
     }, [user, petID]);
 
-      if (loading) {
-        return <div>Loading...</div>;
-      }
+    if (loading) {
+    return <div>Loading...</div>;
+    }
 
 
     return (
@@ -133,7 +135,9 @@ function PetInfo() {
 
                     {/* INFORMATION */}
                     <div className='w-full relative bg-[#E9E9E9] p-3 rounded-md sm:px-5'>
-                        <img className='p-2 bg-secondary rounded-full w-12 h-12 hover:bg-[#ffffff] duration-200 cursor-pointer absolute top-3 right-3' src={unfavorite} alt="" />
+                        <div className='absolute top-3 right-3 sm:top-4 sm:right-5' onClick={(e) => {e.stopPropagation();}}>
+                            <FavoritePet petOwner={pet.userID} petID={petID} />
+                        </div>
                         <div className='my-2'>
                             <p className='text-3xl font-medium pb-1'>{pet.petName}</p> 
                             <p className='font-medium py-2 text-sm text-[#5D5D5D] flex items-center leading-3'>{pet.petType} <span className='h-1 w-1 mx-2 bg-text rounded-full'></span> {pet.location}</p>   
@@ -173,7 +177,7 @@ function PetInfo() {
                         </div>
                     </div> 
 
-                    <div onClick={() => navigate(`/dashboard/find-pet`)} className='w-40 hidden lg:flex cursor-pointer hover:bg-[#f0f0f0] duration-150 bg-secondary rounded-lg shadow-custom mt-3 py-2 justify-center items-center font-semibold'>
+                    <div onClick={() => window.history.back()} className='w-40 hidden lg:flex cursor-pointer hover:bg-[#f0f0f0] duration-150 bg-secondary rounded-lg shadow-custom mt-3 py-2 justify-center items-center font-semibold'>
                         <img className='w-9 mr-3' src={back} alt="" />
                         <p>Go back</p>
                     </div>

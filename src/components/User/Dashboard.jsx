@@ -11,45 +11,49 @@ import { db } from '../../firebase/firebase';
 function Dashboard() {
     const { user } = useContext(AuthContext);
     const [petOwnerTypeExists, setPetOwnerTypeExists] = useState(false);
+    const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     if (!user) {
         return <Navigate to="/" />; 
     }
-    const [isLogoutOpen, setIsLogoutOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-
-    const handleLogoutClick = async () => {
-      setIsLogoutOpen(!isLogoutOpen);
-    }
 
     useEffect(() => {
         const fetchUserData = async () => {
-            try{
-                setIsLoading(true);
-                if(user){
-                    const userDocRef = doc(db, 'users', user.uid);
-                    const userDoc = await getDoc(userDocRef);
-
-                    if(userDoc.exists()){
-                        const userData = userDoc.data();
-
-                        if(userData.petOwnerType){
-                            setPetOwnerTypeExists(true);
+            if(user){
+                try{
+                    if(user){
+                        const userDocRef = doc(db, 'users', user.uid);
+                        const userDoc = await getDoc(userDocRef);
+    
+                        if(userDoc.exists()){
+                            const userData = userDoc.data();
+    
+                            if(userData.petOwnerType){
+                                setPetOwnerTypeExists(true);
+                            }
                         }
                     }
                 }
+                catch (error){
+                    console.error('Error fetching user data: ', error);
+                }
+                finally{
+                    setIsLoading(false);
+                }
             }
-            catch (error){
-                console.error('Error fetching user data: ', error);
-            }
-            finally{
+            else{
                 setIsLoading(false);
             }
             
         }
 
         fetchUserData()
-    }, [])
+    }, [user]);
+
+    const handleLogoutClick = async () => {
+        setIsLogoutOpen(!isLogoutOpen);
+    }
 
     const handlePetOwnerType = async (type) => {
         try{
@@ -58,6 +62,7 @@ function Dashboard() {
             await updateDoc(userRef, {
                 petOwnerType: type
             });
+            setPetOwnerTypeExists(true);
             window.location.reload();
 
         }
@@ -66,12 +71,15 @@ function Dashboard() {
         }
     }
 
+    if(isLoading){
+        return <LoadingScreen />
+    }
+
 
     return (
         <div className='w-full min-h-screen bg-[#A1E4E4] select-none font-poppins text-text'>
-            {isLoading && <LoadingScreen />}
             <Header openLogout={handleLogoutClick} isOpen={isLogoutOpen} loading={setIsLoading}/>
-            {petOwnerTypeExists ? <Outlet /> : <Question petOwnerType={handlePetOwnerType} />}
+            {!petOwnerTypeExists ? <Question petOwnerType={handlePetOwnerType} /> : <Outlet />}
             <NavBar />
         </div>
 

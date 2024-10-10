@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import markAsRead from './assets/read.svg'
+import readIcon from './assets/readIcon.svg'
 import { AuthContext } from '../../General/AuthProvider'
 import { collection, doc, getDocs, orderBy, query, updateDoc, where, writeBatch } from 'firebase/firestore';
 import { db } from '../../../firebase/firebase';
@@ -35,7 +36,7 @@ function Notification() {
                 setNotifications(userNotifications);
             } 
             catch (error) {
-                console.log('Error: ', error);
+                console.error('Error: ', error);
             }
             finally{
                 setLoading(false);
@@ -118,7 +119,7 @@ function Notification() {
         setMarOpen(!marOpen);
     }
 
-    const readNotif = async (postID, notificationID, notifType) => {
+    const readNotif = async (postID, notificationID, notifType, applicationID) => {
         const notificationRef = doc(db, 'notifications', notificationID);
 
         await updateDoc(notificationRef, {
@@ -131,17 +132,21 @@ function Notification() {
         else if(notifType === 'comment'){
             navigate(`post/${postID}`, {state: {notifType}});
         }
+        else if(notifType === 'adoption'){
+            navigate(`/dashboard/profile/application/${applicationID}`, {state: {notifType}});
+        }
     }
 
     return (
-        <div className='pt-36 relative lg:pt-20 lg:pl-48 xl:pl-56 lg:pr-3 lg:ml-4 min-h-screen flex flex-col font-poppins text-text'>
-            <div className='flex mt-3 lg:mt-4 bg-secondary sm:mx-auto lg:mx-0 flex-grow mb-3 w-full text-text sm:w-[97%] lg:w-full sm:rounded-md lg:rounded-lg shadow-custom'>
+        <div className='pt-36 relative lg:pt-20 lg:pl-48 xl:pl-[13.8rem] lg:pr-3 lg:ml-4 min-h-screen flex flex-col font-poppins text-text'>
+            <div className='flex mt-3 lg:mt-3 bg-secondary sm:mx-auto lg:mx-0 flex-grow mb-3 w-full text-text sm:w-[97%] lg:w-full sm:rounded-md lg:rounded-lg shadow-custom'>
                 <div className='p-5 md:px-7 w-full'>
                     <div className='flex relative justify-between'>
                         <h1 className='text-2xl font-semibold'>Notification</h1>
                         <img onClick={openMarkAsRead} className='w-8 p-1 rounded-full hover:bg-[#d8d8d8] cursor-pointer duration-150' src={markAsRead} alt="" />
-                        <div style={{display: marOpen ? 'block' : 'none'}} onClick={() => markAllAsRead(user.uid)} className='absolute top-9 rounded-lg right-0 bg-white cursor-pointer shadow-custom'>
-                            <p className='px-5 py-2 font-medium'>Mark all as read</p>
+                        <div style={{display: marOpen ? 'flex' : 'none'}} onClick={() => markAllAsRead(user.uid)} className='absolute hover:bg-[#e6e6e6] duration-150 top-9 gap-3 rounded-lg items-center right-0 p-5 z-10 bg-white cursor-pointer shadow-custom'>
+                            <img src={readIcon} alt="" />
+                            <p className='font-medium'>Mark all as read</p>
                         </div>
                     </div>
                     <div className='flex gap-1 my-3'>
@@ -159,7 +164,7 @@ function Notification() {
                             <div className="text-center text-gray-500 font-medium py-5 bg-[#E9E9E9] rounded-md">No Notification</div>
                         ) : (
                             displayedNotifications.map((notification) => (
-                                <div key={notification.id} onClick={() => readNotif(notification.postID, notification.id, notification.type)} className='bg-[#E9E9E9] relative items-center flex hover:bg-[#d3d3d3] duration-150 cursor-pointer w-full p-3 rounded-lg'>
+                                <div key={notification.id} onClick={() => readNotif(notification.postID, notification.id, notification.type, notification.applicationID)} className='bg-[#E9E9E9] relative items-center flex hover:bg-[#d3d3d3] duration-150 cursor-pointer w-full p-3 rounded-lg'>
                                     <div className='relative w-12 h-12 shrink-0'>
                                         <img className='w-full h-full object-cover rounded-full' src={notification.image} alt="" />
                                         <img className='w-6 h-6 absolute rounded-full bottom-0 -right-1' src={notification.type == 'like' ? like : notification.type == 'comment' ? comment : application} alt="" />
