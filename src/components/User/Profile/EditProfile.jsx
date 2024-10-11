@@ -135,19 +135,19 @@ function EditProfile({closeEdit}) {
                             <div className='h-full grid w-full grid-cols-2 gap-4 pb-2'>
                                 <div onClick={() => setPetOwnerType('Dog Owner')} className={`${petOwnerType === 'Dog Owner' ? 'border-primary' : 'border-text'} w-full shrink-0 h-full cursor-pointer border-2 duration-150 flex flex-col justify-center items-center rounded-lg p-3 bg-secondary`}>
                                     <img className='w-14' src={petOwnerType === 'Dog Owner' ? selectedDog : dog} alt="" />
-                                    <p className={`${petOwnerType === 'Dog Owner' ? 'text-primary' : ''} font-medium pt-3`}>Dog Owner</p>
+                                    <p className={`${petOwnerType === 'Dog Owner' ? 'text-primary' : ''} text-center font-medium pt-3`}>Dog Owner</p>
                                 </div>
                                 <div onClick={() => setPetOwnerType('Cat Owner')} className={`${petOwnerType === 'Cat Owner' ? 'border-primary' : 'border-text'} w-full shrink-0 h-full cursor-pointer border-2 duration-150 flex flex-col justify-center items-center rounded-lg p-3 bg-secondary`}>
                                     <img className='w-14 pt-[7px]' src={petOwnerType === 'Cat Owner' ? selectedCat : cat} alt="" />
-                                    <p className={`${petOwnerType === 'Cat Owner' ? 'text-primary' : ''} font-medium h-sm:pt-3 pt-[9px]`}>Cat Owner</p>
+                                    <p className={`${petOwnerType === 'Cat Owner' ? 'text-primary' : ''} text-center font-medium h-sm:pt-3 pt-[9px]`}>Cat Owner</p>
                                 </div>
                                 <div onClick={() => setPetOwnerType('Both')} className={`${petOwnerType === 'Both' ? 'border-primary' : 'border-text'} w-full shrink-0 h-full cursor-pointer border-2 duration-150 flex flex-col justify-center items-center rounded-lg p-3 bg-secondary`}>
                                     <img className='w-20' src={petOwnerType === 'Both' ? selectedBoth : both} alt="" />
-                                    <p className={`${petOwnerType === 'Both' ? 'text-primary' : ''} font-medium pt-3`}>Both</p>
+                                    <p className={`${petOwnerType === 'Both' ? 'text-primary' : ''} text-center font-medium pt-3`}>Both</p>
                                 </div>
                                 <div onClick={() => setPetOwnerType('Looking to Adopt')} className={`${petOwnerType === 'Looking to Adopt' ? 'border-primary' : 'border-text'} w-full shrink-0 h-full cursor-pointer border-2 duration-150 flex flex-col justify-center items-center rounded-lg p-3 bg-secondary`}>
                                     <img className='w-[3rem] pt-1' src={petOwnerType === 'Looking to Adopt' ? selectedLooking : looking} alt="" />
-                                    <p className={`${petOwnerType === 'Looking to Adopt' ? 'text-primary' : ''} font-medium pt-3`}>Looking to Adopt</p>
+                                    <p className={`${petOwnerType === 'Looking to Adopt' ? 'text-primary' : ''} text-center font-medium pt-3`}>Looking to Adopt</p>
                                 </div>
                             </div>
                         </div>

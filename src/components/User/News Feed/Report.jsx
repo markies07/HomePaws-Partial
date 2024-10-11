@@ -19,6 +19,7 @@ function Report({postID, closeReport}) {
         setLoading(true);
         if(!selectedReason){
             notifyErrorOrange('Please select a reason for reporting.');
+            setLoading(false)
             return;
         }
 
@@ -67,11 +68,11 @@ function Report({postID, closeReport}) {
                 {/* MORE DETAILS */}
                 <div className='pt-4 pb-11 flex-grow'>
                     <p className='font-medium pb-1'>Additional details:</p>
-                    <textarea value={additionalDetails} onChange={(e) => setAdditionalDetails(e.target.value)} required className='py-2 mb-5 w-full h-full px-3 outline-none rounded-md' placeholder='State your reason...'></textarea>
+                    <textarea required value={additionalDetails} onChange={(e) => setAdditionalDetails(e.target.value)} className='py-2 mb-5 w-full h-full px-3 outline-none rounded-md' placeholder='State your reason...'></textarea>
                 </div>
                 
                 <div className='flex justify-center'>
-                    <button onClick={handleSubmitReport} className='bg-primary py-2 px-5 rounded-md text-white'>{loading ? 'Submitting...' : 'Submit Report'}</button>
+                    <button onClick={handleSubmitReport} className='bg-primary hover:bg-primaryHover duration-150 py-2 px-5 rounded-md text-white'>{loading ? 'Submitting...' : 'Submit Report'}</button>
                 </div>
                 
             </div>

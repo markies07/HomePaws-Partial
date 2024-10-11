@@ -4,12 +4,14 @@ import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import { useParams } from 'react-router-dom'
 import { AuthContext } from '../../General/AuthProvider'
+import Reject from './Reject'
 
 function Application() {
     const {user} = useContext(AuthContext);
     const { applicationID } = useParams();
     const [applicationData, setApplicationData] = useState({});
     const [petData, setPetData] = useState({});
+    const [isRejectOpen, setIsRejectOpen] = useState(false);
 
     useEffect(() => {
         const fetchApplication = async () => {
@@ -54,6 +56,10 @@ function Application() {
             fetchApplication();
         }
     }, [applicationID]);
+
+    const toggleReject = () => {
+        setIsRejectOpen(!isRejectOpen);
+    } 
 
     const image = petData.petImages && petData.petImages.length > 0 ? petData.petImages[0] : null;
    
@@ -159,14 +165,31 @@ function Application() {
                     </div>
 
                     {/* ACCEPT OR REJECT */}
-                    <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.petOwnerID === user.uid ? 'flex' : 'hidden'}`}>
+                    <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.petOwnerID === user.uid && applicationData.status === 'pending' ? 'flex' : 'hidden'}`}>
                         <button className='bg-[#84B725] cursor-pointer hover:bg-[#76a321] duration-150 font-medium text-white py-2 px-6 text-sm sm:text-base rounded-md'>ACCEPT</button>
-                        <button className='bg-[#D25A5A] cursor-pointer hover:bg-[#b94d4d] duration-150 font-medium text-white py-2 px-6 text-sm sm:text-base rounded-md'>REJECT</button>
+                        <button onClick={toggleReject} className='bg-[#D25A5A] cursor-pointer hover:bg-[#b94d4d] duration-150 font-medium text-white py-2 px-6 text-sm sm:text-base rounded-md'>REJECT</button>
                     </div>
+
+                    {/* REVIEWING APPLICAITON */}
                     <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.petOwnerID !== user.uid ? 'flex' : 'hidden'}`}>
                         <p className='bg-primary font-medium text-white py-2 px-6 text-sm sm:text-base rounded-full'>Application Under Review</p>
                     </div>
+
+                    {/* REJECTED */}
+                    <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.status === 'rejected' ? 'flex' : 'hidden'}`}>
+                        <p className='bg-primary hover:bg-primaryHover duration-150 cursor-pointer font-medium text-white py-2 px-6 text-sm sm:text-base rounded-full'>Rejected Adoption Application</p>
+                    </div>
                 </div>
+
+                {/* REJECTING APPLICATION */}
+                <div className={`${isRejectOpen ? 'block' : 'hidden'}`}>
+                    <Reject application={applicationData} petImage={image} closeReject={toggleReject} />
+                </div>
+
+                {/* REJECTED APPLICATION */}
+                {/* <div className={`${isRejectOpen ? 'block' : 'hidden'}`}>
+                    <Reject application={applicationData} petImage={image} closeReject={toggleReject} />
+                </div> */}
 
             </div>
         </div>

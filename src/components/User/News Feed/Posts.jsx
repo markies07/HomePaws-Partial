@@ -219,7 +219,7 @@ function Posts() {
                             {/* IMAGES */}
                             <div className='flex gap-2 md:gap-3 justify-center mt-2 object-cover sm:w-[80%] sm:mx-auto'>
                             {post.images && post.images.length > 0 && ( 
-                                post.images.map((img, index) => <img src={img} key={index} onClick={() => showModal(img)} className='w-full cursor-pointer object-cover overflow-hidden max-w-40 h-48 md:h-52 bg-[#D9D9D9] rounded-md' />
+                                post.images.map((img, index) => <img src={img} key={index} onClick={() => showModal(img)} className='w-full cursor-pointer object-cover overflow-hidden max-w-40 xl:h-72 xl:max-w-52 h-48 md:h-52 bg-[#D9D9D9] rounded-md' />
                             ))}
                             </div>
 
@@ -252,7 +252,7 @@ function Posts() {
                                     <img className='w-[21px]' src={comment} alt="" />
                                     <p className='font-semibold pl-1 sm:pl-2 text-sm'>Comment</p>
                                 </div>
-                                <div onClick={() => handleStartChat(post.userID)} className='flex items-center cursor-pointer'>
+                                <div onClick={() => handleStartChat(post.userID)} className={`flex items-center cursor-pointer ${post.userID === user.uid ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
                                     <img className='w-5' src={message} alt="" />
                                     <p className='font-semibold pl-1 sm:pl-2 text-sm'>Message</p>
                                 </div>
