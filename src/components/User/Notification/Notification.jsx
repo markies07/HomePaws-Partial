@@ -133,7 +133,7 @@ function Notification() {
             navigate(`post/${postID}`, {state: {notifType}});
         }
         else if(notifType === 'adoption'){
-            navigate(`/dashboard/profile/application/${applicationID}`, {state: {notifType}});
+            navigate(`/dashboard/profile/applications/application/${applicationID}`, {state: {notifType}});
         }
     }
 

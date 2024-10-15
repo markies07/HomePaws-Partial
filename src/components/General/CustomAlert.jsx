@@ -6,8 +6,8 @@ export const confirm = (title, message) => {
         text: message,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#D25A5A',
-        cancelButtonColor: '#82ac35',
+        confirmButtonColor: '#82ac35',
+        cancelButtonColor: '#D25A5A',
         confirmButtonText: 'Yes',
         cancelButtonText: 'Cancel'
     });
@@ -18,7 +18,7 @@ export const successAlert = (message) => {
         title: 'Success!',
         text: message,
         icon: 'success',
-        confirmButtonColor: '#8FBB3E',
+        confirmButtonColor: '#82ac35',
         timer: 5000,
     });
 };

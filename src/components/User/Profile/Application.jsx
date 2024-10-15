@@ -1,10 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react'
 import close from './assets/close.svg'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import { useParams } from 'react-router-dom'
 import { AuthContext } from '../../General/AuthProvider'
 import Reject from './Reject'
+import RejectionDetails from './RejectionDetails'
+import { confirm, successAlert } from '../../General/CustomAlert'
+import { notifySuccessOrange } from '../../General/CustomToast'
 
 function Application() {
     const {user} = useContext(AuthContext);
@@ -12,6 +15,7 @@ function Application() {
     const [applicationData, setApplicationData] = useState({});
     const [petData, setPetData] = useState({});
     const [isRejectOpen, setIsRejectOpen] = useState(false);
+    const [isRejectionDetailsOpen, setIsRejectionDetailsOpen] = useState(false);
 
     useEffect(() => {
         const fetchApplication = async () => {
@@ -57,8 +61,43 @@ function Application() {
         }
     }, [applicationID]);
 
+    // ACCEPTING APPLICATION
+    const acceptApplication = async () => {
+        confirm(`Accepting Adoption Application`, `Are you sure you want to accept this application?`).then(async (result) => {
+            if(result.isConfirmed){
+                try{
+                    const applicationRef = doc(db, 'adoptionApplications', applicationID);
+
+                    const applicationSnap = await getDoc(applicationRef);
+
+                    if(applicationSnap.exists()){
+                        const applicationData = applicationSnap.data();
+
+                        await setDoc(doc(db, 'acceptedApplications', applicationID), {
+                            ...applicationData,
+                            status: 'accepted',
+                            acceptedDate: serverTimestamp(),
+                        });
+
+                        await updateDoc(applicationRef, {
+                            status: 'accepted',
+                        });
+                        successAlert('Application accepted successfully!');
+                    }
+                }
+                catch(error){
+                    console.error(error);
+                }
+            }
+        });
+    }
+
     const toggleReject = () => {
         setIsRejectOpen(!isRejectOpen);
+    } 
+
+    const toggleRejectionDetails = () => {
+        setIsRejectionDetailsOpen(!isRejectionDetailsOpen);
     } 
 
     const image = petData.petImages && petData.petImages.length > 0 ? petData.petImages[0] : null;
@@ -166,17 +205,17 @@ function Application() {
 
                     {/* ACCEPT OR REJECT */}
                     <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.petOwnerID === user.uid && applicationData.status === 'pending' ? 'flex' : 'hidden'}`}>
-                        <button className='bg-[#84B725] cursor-pointer hover:bg-[#76a321] duration-150 font-medium text-white py-2 px-6 text-sm sm:text-base rounded-md'>ACCEPT</button>
+                        <button onClick={acceptApplication} className='bg-[#84B725] cursor-pointer hover:bg-[#76a321] duration-150 font-medium text-white py-2 px-6 text-sm sm:text-base rounded-md'>ACCEPT</button>
                         <button onClick={toggleReject} className='bg-[#D25A5A] cursor-pointer hover:bg-[#b94d4d] duration-150 font-medium text-white py-2 px-6 text-sm sm:text-base rounded-md'>REJECT</button>
                     </div>
 
                     {/* REVIEWING APPLICAITON */}
                     <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.petOwnerID !== user.uid ? 'flex' : 'hidden'}`}>
-                        <p className='bg-primary font-medium text-white py-2 px-6 text-sm sm:text-base rounded-full'>Application Under Review</p>
+                        <p className='border-2 border-primary font-medium text-primary bg-secondary py-2 px-6 text-sm sm:text-base rounded-full'>Application Under Review</p>
                     </div>
 
                     {/* REJECTED */}
-                    <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.status === 'rejected' ? 'flex' : 'hidden'}`}>
+                    <div onClick={toggleRejectionDetails} className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.status === 'rejected' ? 'flex' : 'hidden'}`}>
                         <p className='bg-primary hover:bg-primaryHover duration-150 cursor-pointer font-medium text-white py-2 px-6 text-sm sm:text-base rounded-full'>Rejected Adoption Application</p>
                     </div>
                 </div>
@@ -186,10 +225,9 @@ function Application() {
                     <Reject application={applicationData} petImage={image} closeReject={toggleReject} />
                 </div>
 
-                {/* REJECTED APPLICATION */}
-                {/* <div className={`${isRejectOpen ? 'block' : 'hidden'}`}>
-                    <Reject application={applicationData} petImage={image} closeReject={toggleReject} />
-                </div> */}
+                <div className={`${isRejectionDetailsOpen ? 'block' : 'hidden'}`}>
+                    <RejectionDetails applicationID={applicationData.applicationID} petName={applicationData.petName} closeIt={toggleRejectionDetails} />
+                </div>
 
             </div>
         </div>

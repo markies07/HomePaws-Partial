@@ -3,7 +3,7 @@ import { AuthContext } from '../../General/AuthProvider';
 import edit from './assets/edit.svg';
 import Options from './Options'
 
-function UserProfile({openApplications, openPetListed, openFavPets, openEdit}) {
+function UserProfile({openPetListed, openFavPets, openEdit}) {
     const { userData, user } = useContext(AuthContext);
 
     return (
@@ -26,7 +26,7 @@ function UserProfile({openApplications, openPetListed, openFavPets, openEdit}) {
                         </div>
                     </div>
                 </div>
-                < Options openApplications={openApplications} openPetListed={openPetListed} openFavPets={openFavPets} />
+                < Options openPetListed={openPetListed} openFavPets={openFavPets} />
             </div>
         </div>
     )

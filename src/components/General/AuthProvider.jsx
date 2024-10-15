@@ -3,6 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../../firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import LoadingScreen from './LoadingScreen';
+import defaultProfile from '../../assets/icons/default-profile.svg';
 
 export const AuthContext = createContext();
 
@@ -28,7 +29,12 @@ export const AuthProvider = ({ children }) => {
                 setUser(currentUser);
                 const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
                 if (userDoc.exists()) {
-                    setUserData(userDoc.data());
+                    const userDataFromFirestore = userDoc.data();
+                    
+                    if(!userDataFromFirestore.profilePictureURL){
+                        userDataFromFirestore.profilePictureURL = defaultProfile;
+                    }
+                    setUserData(userDataFromFirestore);
                 }
             } else {
                 setUser(null);

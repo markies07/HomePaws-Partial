@@ -120,7 +120,7 @@ function AdoptionForm() {
 
 
     return (
-        <div className='pt-40 lg:pt-24 lg:pl-48 xl:pl-56 lg:pr-3 lg:ml-4 min-h-screen flex flex-col font-poppins text-text'>
+        <div className='pt-[9.75rem] lg:pt-[5.75rem] lg:pl-48 xl:pl-56 lg:pr-3 lg:ml-4 min-h-screen flex flex-col font-poppins text-text'>
             <div className='relative px-4 pb-5 bg-[#E9E9E9] sm:w-[97%] lg:w-full mx-auto mb-4 sm:rounded-lg shadow-custom w-full h-full'>
                 <img onClick={() => window.history.back()} className='absolute border-2 border-[#E9E9E9] hover:border-text duration-150 cursor-pointer p-1 top-3 right-3' src={close} alt="" />
                 <h1 className='text-2xl sm:text-3xl font-semibold text-center pt-12 pb-7'>Adoption Application</h1>

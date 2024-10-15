@@ -20,6 +20,8 @@ import { LikesAndCommentsProvider } from "./components/General/LikesAndCommentsC
 import { ImageModalProvider } from "./components/General/ImageModalContext"
 import Conversation from "./components/User/Chat/Conversation"
 import Post from "./components/User/Notification/Post"
+import AdoptionApplications from "./components/User/Profile/AdoptionApplications"
+import AcceptedApplication from "./components/User/Profile/AcceptedApplication"
 
 function App() {
   
@@ -60,7 +62,10 @@ function App() {
 
                         {/* PROFILE SECTION */}
                         <Route path="profile" element={<Profile />} />
-                        <Route path="profile/application/:applicationID" element={<Application />} />
+                        <Route path="profile/applications" element={<AdoptionApplications />} />
+                        <Route path="profile/applications/accepted/:applicationID" element={<AcceptedApplication />} />
+
+                        <Route path="profile/applications/application/:applicationID" element={<Application />} />
 
                       </Route>
                     </Route>
