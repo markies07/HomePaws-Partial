@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import close from './assets/close.svg'
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AppNavBar from './AppNavBar';
 import Active from './Applications/Active';
 import Accepted from './Applications/Accepted';
@@ -11,9 +11,10 @@ import { AuthContext } from '../../General/AuthProvider';
 import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../../firebase/firebase';
 
-function AdoptionApplications() {
+function AdoptionApplications({initialTab}) {
     const navigate = useNavigate();
-    const [selectedTab, setSelectedTab] = useState('Active');
+    const location = useLocation();
+    const [selectedTab, setSelectedTab] = useState(initialTab);
     const {user, userData} = useContext(AuthContext);
     const [otherApplications, setOtherApplications] = useState([]);
     const [myApplications, setMyApplications] = useState([]);
@@ -21,6 +22,15 @@ function AdoptionApplications() {
     const [userImages, setUserImages] = useState({});
     const [petImages, setPetImages] = useState({});
     const [status, setStatus] = useState('pending');
+
+    useEffect(() => {
+      const path = location.pathname;
+      if (path.includes('active')) setSelectedTab('Active');
+      if (path.includes('accepted')) setSelectedTab('Accepted');
+      if (path.includes('rejected')) setSelectedTab('Rejected');
+      if (path.includes('closed')) setSelectedTab('Closed');
+      if (path.includes('rehomed')) setSelectedTab('Rehomed');
+    }, [location]);
 
     const renderComponent = () => {
       switch (selectedTab) {
@@ -38,6 +48,11 @@ function AdoptionApplications() {
               return <Active petImages={petImages} userImages={userImages} loading={loading} otherApplications={otherApplications} myApplications={myApplications} />;
       }
     }
+
+    const handleTabClick = (tab) => {
+      setSelectedTab(tab);
+      navigate(`/dashboard/profile/applications/${tab.toLowerCase()}`);
+    };
 
     useEffect(() => {
       switch (selectedTab) {
@@ -135,10 +150,22 @@ function AdoptionApplications() {
           <div className='bg-secondary flex flex-col mb-3 pt-3 overflow-hidden flex-grow sm:pt-5 relative w-full shadow-custom h-full sm:rounded-md lg:rounded-lg'>
               <img onClick={() => navigate('/dashboard/profile')} className='w-9 p-1 border-2 border-transparent hover:border-text duration-150 absolute top-2 right-2 cursor-pointer' src={close} alt="" />
               <p className='text-xl px-3 sm:px-5 font-semibold pt-1 sm:pt-0 sm:text-2xl'>Adoption Applications</p>
-              
-              {/* OTHER COMPONENTS */}
+
+              {/* TABS */}
               <div className='pt-3 px-3 z-10 sm:px-5'>
-                <AppNavBar setSelectedTab={setSelectedTab} selectedTab={selectedTab} />
+                <div className='flex w-full justify-between sm:justify-start sm:gap-5 lg:gap-7 text-[#898989] font-semibold text-xs sm:text-base'>
+                  {['Active', 'Accepted', 'Rejected', 'Closed', 'Rehomed'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => handleTabClick(tab)}
+                      className={`pt-2 sm:px-3 lg:px-5 ${
+                        selectedTab === tab ? 'text-primary border-b-[3px] border-primary' : 'border-b-[3px] border-transparent'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className='bg-[#E9E9E9] h-full flex-grow p-3 sm:p-5 -mt-[3px]'>

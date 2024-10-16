@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react'
 import close from './assets/close.svg'
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { AuthContext } from '../../General/AuthProvider'
 import Reject from './Reject'
 import RejectionDetails from './RejectionDetails'
@@ -10,6 +10,7 @@ import { confirm, successAlert } from '../../General/CustomAlert'
 import { notifySuccessOrange } from '../../General/CustomToast'
 
 function Application() {
+    const navigate = useNavigate();
     const {user} = useContext(AuthContext);
     const { applicationID } = useParams();
     const [applicationData, setApplicationData] = useState({});
@@ -76,13 +77,32 @@ function Application() {
                         await setDoc(doc(db, 'acceptedApplications', applicationID), {
                             ...applicationData,
                             status: 'accepted',
+                            isScheduled: 'waiting',
                             acceptedDate: serverTimestamp(),
                         });
 
                         await updateDoc(applicationRef, {
                             status: 'accepted',
                         });
+
+                        // NOTIFICATION
+                        const notificationRef = collection(db, 'notifications');
+                        await addDoc(notificationRef, {
+                            content: 'accepted your adoption application.',
+                            applicationID: applicationData.applicationID,
+                            type: 'adoption',
+                            image: image,
+                            senderName: applicationData.petName+'\'s pet owner',
+                            senderId: user.uid,
+                            userId: applicationData.adopterUserID,
+                            isRead: false,
+                            accepted: true,
+                            timestamp: serverTimestamp(),
+                        });
+
                         successAlert('Application accepted successfully!');
+                        navigate(`/dashboard/profile/applications/accepted/${applicationID}`)
+
                     }
                 }
                 catch(error){
@@ -210,7 +230,7 @@ function Application() {
                     </div>
 
                     {/* REVIEWING APPLICAITON */}
-                    <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.petOwnerID !== user.uid ? 'flex' : 'hidden'}`}>
+                    <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.petOwnerID !== user.uid && applicationData.status !== 'rejected' ? 'flex' : 'hidden'}`}>
                         <p className='border-2 border-primary font-medium text-primary bg-secondary py-2 px-6 text-sm sm:text-base rounded-full'>Application Under Review</p>
                     </div>
 

@@ -180,7 +180,7 @@ function PetInfo() {
                         </div>
                     </div> 
 
-                    <div onClick={() => window.history.back()} className='w-40 hidden lg:flex cursor-pointer hover:bg-[#f0f0f0] duration-150 bg-secondary rounded-lg shadow-custom mt-3 py-2 justify-center items-center font-semibold'>
+                    <div onClick={() => navigate('/dashboard/find-pet')} className='w-40 hidden lg:flex cursor-pointer hover:bg-[#f0f0f0] duration-150 bg-secondary rounded-lg shadow-custom mt-3 py-2 justify-center items-center font-semibold'>
                         <img className='w-9 mr-3' src={back} alt="" />
                         <p>Go back</p>
                     </div>

@@ -30,9 +30,6 @@ function RejectionDetails({applicationID, petName, closeIt}) {
         }
     }, [applicationID])
 
-    console.log(rejectedApp)
-
-
     return (
         <div className='fixed inset-0 flex justify-center items-center z-50 bg-black/50'>
             <div className="relative px-5 bg-[#d8d8d8] w-[90%] sm:w-[30rem] h-auto rounded-lg py-3 flex flex-col">

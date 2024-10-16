@@ -1,16 +1,62 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { AuthContext } from '../../../General/AuthProvider'
-import { doc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, orderBy, query, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../../../firebase/firebase';
 import { useNavigate } from 'react-router-dom';
 import accepted from '../assets/accepted.svg';
 
 
-function Accepted({loading, otherApplications, myApplications, petImages, userImages}) {
+function Accepted({petImages, userImages}) {
   const [filter, setFilter] = useState('All');
+  const [loading, setLoading] = useState(true);
   const {user, userData} = useContext(AuthContext);
+  const [otherApplications, setOtherApplications] = useState([]);
+  const [myApplications, setMyApplications] = useState([]);
   const navigate = useNavigate();
 
+  const fetchAcceptedApplications = async () => {
+      try{
+        const otherApplicationsRef = query(
+            collection(db, 'acceptedApplications'), 
+            where('petOwnerID' , '==', user.uid), 
+            orderBy('acceptedDate', 'desc')
+        );
+
+        const myApplicationsRef = query(
+            collection(db, 'acceptedApplications'), 
+            where('adopterUserID' , '==', user.uid), 
+            orderBy('acceptedDate', 'desc')
+        );
+
+        const [otherSnapshot, mySnapshot] = await Promise.all([
+            getDocs(otherApplicationsRef),
+            getDocs(myApplicationsRef)
+        ]);
+
+        const otherApplications = otherSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+
+        const myApplications = mySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+
+        setOtherApplications(otherApplications);
+        setMyApplications(myApplications);
+    }
+    catch(error){
+        console.error(error);
+    }
+    finally{
+        setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchAcceptedApplications();
+  }, []);
 
   const getTimeDifference = (timestamp) => {
       const now = new Date();
@@ -43,14 +89,14 @@ function Accepted({loading, otherApplications, myApplications, petImages, userIm
   const read = async (applicationID, adopterID) => {
 
     if(adopterID !== user.uid){
-      const applciationRef = doc(db, 'adoptionApplications', applicationID);
+      const applciationRef = doc(db, 'acceptedApplications', applicationID);
       
       await updateDoc(applciationRef, {
         read: true,
       });
     }
     
-    navigate(`application/${applicationID}`)
+    navigate(`${applicationID}`)
   }
 
 
@@ -64,7 +110,7 @@ function Accepted({loading, otherApplications, myApplications, petImages, userIm
           <p className={`${application.read === false && application.adopterUserID !== user.uid ? 'pr-7 sm:pr-10' : ''} font-semibold text-sm sm:text-base leading-4`}>
             {isMyApplication ? 'Your' : application.adopterName+'\'s'} <span className='font-normal'>adoption application for {application.petName} has been <span className='font-semibold text-[#4CAF50]'>accepted</span>.</span>
           </p>
-          <p className='text-xs sm:text-[13px] text-[#8a8a8a] mt-1 sm:mt-0'>{getTimeDifference(application.dateSubmitted)}</p>
+          <p className='text-xs sm:text-[13px] text-[#8a8a8a] mt-1 sm:mt-0'>{getTimeDifference(application.acceptedDate)}</p>
         </div>
 
         {/* UNREAD */}

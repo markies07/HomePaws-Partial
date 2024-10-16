@@ -17,6 +17,7 @@ function Notification() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    // FETCHING NOTIFICATIONS
     useEffect(() => {
         const fetchNotifications = async () => {
             try {
@@ -66,6 +67,7 @@ function Notification() {
     
             if (snapshot.empty) {
                 console.log("No unread notifications to mark as read.");
+                setMarOpen(false);
                 return;
             }
     
@@ -78,6 +80,7 @@ function Notification() {
             // Commit the batch update
             await batch.commit();
             console.log("All notifications marked as read!");
+            setMarOpen(false);
             window.location.reload();
         } catch (error) {
             console.error("Error marking notifications as read: ", error);
@@ -119,7 +122,7 @@ function Notification() {
         setMarOpen(!marOpen);
     }
 
-    const readNotif = async (postID, notificationID, notifType, applicationID) => {
+    const readNotif = async (postID, notificationID, notifType, applicationID, accepted) => {
         const notificationRef = doc(db, 'notifications', notificationID);
 
         await updateDoc(notificationRef, {
@@ -133,7 +136,12 @@ function Notification() {
             navigate(`post/${postID}`, {state: {notifType}});
         }
         else if(notifType === 'adoption'){
-            navigate(`/dashboard/profile/applications/application/${applicationID}`, {state: {notifType}});
+            if(accepted){
+                navigate(`/dashboard/profile/applications/accepted/${applicationID}`, {state: {notifType}});
+            }
+            else{
+                navigate(`/dashboard/profile/applications/application/${applicationID}`, {state: {notifType}});
+            }
         }
     }
 
@@ -164,7 +172,7 @@ function Notification() {
                             <div className="text-center text-gray-500 font-medium py-5 bg-[#E9E9E9] rounded-md">No Notification</div>
                         ) : (
                             displayedNotifications.map((notification) => (
-                                <div key={notification.id} onClick={() => readNotif(notification.postID, notification.id, notification.type, notification.applicationID)} className='bg-[#E9E9E9] relative items-center flex hover:bg-[#d3d3d3] duration-150 cursor-pointer w-full p-3 rounded-lg'>
+                                <div key={notification.id} onClick={() => readNotif(notification.postID, notification.id, notification.type, notification.applicationID, notification.accepted)} className='bg-[#E9E9E9] relative items-center flex hover:bg-[#d3d3d3] duration-150 cursor-pointer w-full p-3 rounded-lg'>
                                     <div className='relative w-12 h-12 shrink-0'>
                                         <img className='w-full h-full object-cover rounded-full' src={notification.image} alt="" />
                                         <img className='w-6 h-6 absolute rounded-full bottom-0 -right-1' src={notification.type == 'like' ? like : notification.type == 'comment' ? comment : application} alt="" />

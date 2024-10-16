@@ -23,6 +23,7 @@ import Post from "./components/User/Notification/Post"
 import AdoptionApplications from "./components/User/Profile/AdoptionApplications"
 import AcceptedApplication from "./components/User/Profile/AcceptedApplication"
 
+
 function App() {
   
   return (
@@ -62,10 +63,17 @@ function App() {
 
                         {/* PROFILE SECTION */}
                         <Route path="profile" element={<Profile />} />
-                        <Route path="profile/applications" element={<AdoptionApplications />} />
-                        <Route path="profile/applications/accepted/:applicationID" element={<AcceptedApplication />} />
+                        {/* APPLICATIONS */}
+                        <Route path="profile/applications/active" element={<AdoptionApplications initialTab="Active" />} />
+                        <Route path="profile/applications/accepted" element={<AdoptionApplications initialTab="Accepted" />} />
+                        <Route path="profile/applications/rejected" element={<AdoptionApplications initialTab="Rejected" />} />
+                        <Route path="profile/applications/closed" element={<AdoptionApplications initialTab="Closed" />} />
+                        <Route path="profile/applications/rehomed" element={<AdoptionApplications initialTab="Rehomed" />} />
 
+                        <Route path="profile/applications/accepted/:applicationID" element={<AcceptedApplication />} />
+                        <Route path="profile/applications/active/application/:applicationID" element={<Application />} />
                         <Route path="profile/applications/application/:applicationID" element={<Application />} />
+                        <Route path="profile/applications/rejected/application/:applicationID" element={<Application />} />
 
                       </Route>
                     </Route>

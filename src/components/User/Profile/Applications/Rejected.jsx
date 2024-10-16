@@ -67,7 +67,7 @@ function Rejected({loading, otherApplications, myApplications, petImages, userIm
         </div>
 
         {/* UNREAD */}
-        <div className={`${application.read === false && application.adopterUserID !== user.uid ? 'flex' : 'hidden'} absolute right-3 sm:right-5 top-0 h-full items-center justify-center`}>
+        <div className={`${application.read === false && application.petOwnerID !== user.uid ? 'flex' : 'hidden'} absolute right-3 sm:right-5 top-0 h-full items-center justify-center`}>
           <div className='w-4 h-4 bg-primary rounded-full' />
         </div>
       </div>

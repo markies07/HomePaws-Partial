@@ -26,7 +26,7 @@ function AdoptionForm() {
         experienceWithPets: '',
         typeOfResidence: 'House',
         occupation: '',
-        salaryRange: '',
+        salaryRange: 'Less than Php 10,000',
         commitment: '', 
     });
 

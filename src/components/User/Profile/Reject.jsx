@@ -35,14 +35,16 @@ function Reject({application, closeReject, petImage}) {
                 status: 'rejected',
             });
 
+            // NOTIFICATION
             const notificationRef = collection(db, 'notifications');
             await addDoc(notificationRef, {
                 content: 'rejected your adoption application.',
-                adopterID: application.adopterUserID,
                 applicationID: application.applicationID,
                 type: 'adoption',
                 image: petImage,
-                senderName: userData.fullName,
+                senderName: application.petName+'\'s pet owner',
+                senderId: user.uid,
+                userId: application.adopterUserID,
                 isRead: false,
                 timestamp: serverTimestamp(),
             });
