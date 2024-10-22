@@ -1,23 +1,49 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import close from './assets/close-dark.svg'
 import { AuthContext } from '../../General/AuthProvider'
 import { db } from '../../../firebase/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { successAlert } from '../../General/CustomAlert';
 import { notifyErrorOrange } from '../../General/CustomToast';
+import paw from './assets/white-paw.svg'
 
-function Schedule({closeUI, data}) {
+function Schedule({closeUI, data, isMeetup}) {
     const {user} = useContext(AuthContext);
     const [loading, setLoading] = useState(false);
     const [meetUpDate, setMeetUpDate] = useState('');
     const [meetUpTime, setMeetUpTime] = useState('');
     const [meetUpPlace, setMeetUpPlace] = useState('');
+    const [isScheduled, setIsScheduled] = useState(data.isScheduled);
+
+    useEffect(() => {
+        if (data && data.meetupSchedule) {
+          setMeetUpDate(data.meetupSchedule.meetUpDate || '');
+          setMeetUpTime(data.meetupSchedule.meetUpTime || '');
+          setMeetUpPlace(data.meetupSchedule.meetUpPlace || '');
+        }
+      }, [data]);
+
+    // CHANGING FORMAT OF TIME
+    function convertTo12Hour(time) {
+        let [hours, minutes] = time.split(':');
+        hours = parseInt(hours);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12; // Convert to 12-hour format
+        return `${hours}:${minutes} ${ampm}`;
+    }
+
+    // CHANGING FORMAT OF DATE
+    const formatDate = (dateString) => {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString('en-US', options);
+    };
 
     const submitSchedule = async () => {
         setLoading(true);
 
         if (!meetUpDate || !meetUpTime || !meetUpPlace) {
             notifyErrorOrange("Please fill out all fields");
+            setLoading(false);
             return;
         }
 
@@ -29,14 +55,9 @@ function Schedule({closeUI, data}) {
                     meetUpDate,
                     meetUpTime,
                     meetUpPlace,
-                    petOwnerConfirmation: {
-                        isConfirmed: true,
-                    },
-                    adopterConfirmation: {
-                        isConfirmed: false,
-                    }
                 },
-                isScheduled: 'submitted',
+                status: 'scheduled',
+                isScheduled: true,
             }
     
             await updateDoc(applicationRef, meetUpData);
@@ -55,6 +76,31 @@ function Schedule({closeUI, data}) {
         }
     }
 
+    const submitReschedule = async () => {
+        setLoading(true);
+
+        try{
+            const docRef = doc(db, 'acceptedApplications', data.applicationID);
+
+            await updateDoc(docRef, {
+                "meetupSchedule.meetUpDate": meetUpDate,
+                "meetupSchedule.meetUpTime": meetUpTime,
+                "meetupSchedule.meetUpPlace": meetUpPlace,
+                status: 'scheduled',
+            })
+            successAlert('New schedule submitted successfully!');
+            setTimeout(() => {
+                window.location.reload();
+            }, [1000])
+        }
+        catch(error){
+            console.error(error);
+        }
+        finally{
+            setLoading(false);
+        }
+    }
+
     
 
     return (
@@ -64,7 +110,7 @@ function Schedule({closeUI, data}) {
                 <h1 className='text-center shrink-0 text-2xl font-semibold pt-5 sm:pt-0 mb-4'>Meet up Schedule</h1>
                 
                 {/* SETTING UP SCHEDULE */}
-                {data.isScheduled === 'waiting' && data.petOwnerID === user.uid ? (
+                {data.isScheduled === false && data.petOwnerID === user.uid && (
                     <div className='mt-3'>
                         <div className='w-full flex gap-2'>
                             <div className='w-[50%]'>
@@ -83,55 +129,72 @@ function Schedule({closeUI, data}) {
 
                         {/* SUBMIT BUTTON */}
                         <div className='flex justify-center gap-2 pt-7'>
-                            <button onClick={submitSchedule} className='bg-primary cursor-pointer duration-150 hover:bg-primaryHover font-medium gap-2 text-white py-1 px-5 rounded-md'>{loading ? 'SUBMITTING...' : 'SUBMIT'}</button>
+                            <button onClick={submitSchedule} className='bg-[#90b845] hover:bg-[#98c24a] cursor-pointer duration-150 font-medium gap-2 text-white py-1 px-5 rounded-md'>{loading ? 'SUBMITTING...' : 'SUBMIT'}</button>
                         </div>
                     </div>
-                ) : (
+                )}
+
+                {/* FOR ADOPTER */}
+                { data.isScheduled === false && data.adopterUserID === user.uid && (
                     <div className='w-full mt-3 bg-secondary shadow-custom p-2 sm:p-3 rounded-md'>
-                        <p className='font-semibold text-center leading-5'>Waiting for the pet owner to set-up schedule</p>
+                        <p className='font-semibold text-center leading-5'>Waiting for the pet owner to set up a schedule</p>
                     </div>
                 )}
 
                 {/* SUBMITTED SCHEDULE */}
-                {data.isScheduled === 'submitted' && (
+                {data.isScheduled === true && isScheduled === true && (
                     <div className='mt-2'>
 
                         <div className='flex gap-2'>
                             <div className='w-[65%] bg-secondary shadow-custom p-2 sm:p-3 rounded-md'>
                                 <p className='font-semibold'>Date:</p>
-                                <p>November 7, 2024</p>
+                                <p>{formatDate(data.meetupSchedule.meetUpDate)}</p>
                             </div>
                             <div className='w-[35%] bg-secondary shadow-custom p-2 sm:p-3 rounded-md'>
                                 <p className='font-semibold'>Time:</p>
-                                <p>12:00 PM</p>
+                                <p>{convertTo12Hour(data.meetupSchedule.meetUpTime)}</p>
                             </div>
                         </div>
-                        <div className='w-full mt-3 bg-secondary shadow-custom p-2 sm:p-3 rounded-md'>
+                        <div className='w-full mt-2 bg-secondary shadow-custom p-2 sm:p-3 rounded-md'>
                             <p className='font-semibold'>Place:</p>
-                            <p>Pasong Kawayan 2 General Trias, Cavite</p>
+                            <p>{data.meetupSchedule.meetUpPlace}</p>
                         </div>
 
-                        {/* CONFIRM BUTTONS */}
-                        {data.isScheduled === 'submitted' ? (
-                            <div className='flex justify-center gap-2 pt-7'>
-                                <button className='bg-[#80A933] cursor-pointer duration-150 hover:bg-[#72972e] font-medium gap-2 text-white py-1 w-24 rounded-md'>CONFIRM</button>
-                                <button className='bg-[#D25A5A] cursor-pointer duration-150 hover:bg-[#bd5252] font-medium gap-2 text-white py-1 w-24 rounded-md'>EDIT</button>
-                            </div>
-                        ) : (
-                            // WAITING FOR RESPONSE 
-                            <div className='hidden justify-center gap-2 pt-5'>
-                                <p className='font-medium text-white shadow-custom bg-primary rounded-full py-2 px-4'>WAITING FOR CONFIRMATION</p>
-                            </div>
-                        )}
+                        {/* BUTTONS */}
+                        <div className='flex justify-center gap-2 pt-7'>
+                            <button onClick={() => setIsScheduled(false)} className={`${!isMeetup ? 'block' : 'hidden'} bg-[#D25A5A] hover:bg-[#c25454] cursor-pointer duration-150  font-medium gap-2 text-white py-1 px-4 rounded-md`}>RESCHEDULE</button>
+                            <button className={`${isMeetup && data.petOwnerID === user.uid ? 'flex' : 'hidden'} bg-[#84B725] hover:bg-[#76a321] text-xs md:text-base cursor-pointer duration-150  items-center font-medium gap-2 text-white p-2 rounded-md`}><img className='w-5 h-5' src={paw} alt="" />Rehome Complete</button>
+                        </div>
+                       
+                    </div>
+                )}
 
-                        
+                {/* RESCHEDULING MEET-UP */}
+                {isScheduled === false && data.meetupSchedule && (
+                    <div className='mt-3'>
+                        <div className='w-full flex gap-2'>
+                            <div className='w-[50%]'>
+                                <p className='font-semibold'>Date</p>
+                                <input required onChange={(e) => setMeetUpDate(e.target.value)} value={meetUpDate} className='py-[3px] text-sm sm:text-base bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="date" />
+                            </div>
+                            <div className='w-[50%]'>
+                                <p className='font-semibold'>Time</p>
+                                <input required onChange={(e) => setMeetUpTime(e.target.value)} value={meetUpTime} className='py-[3px] text-sm sm:text-base bg-secondary w-full px-2 border-2 outline-none border-text rounded-md' type="time" />
+                            </div>
+                        </div>
+                        <div className='w-full mt-3'>
+                            <p className='font-semibold'>Place</p>
+                            <textarea required onChange={(e) => setMeetUpPlace(e.target.value)} value={meetUpPlace} className='py-1 w-full h-20 px-2 outline-none border-2 border-text rounded-md' placeholder='Place of meet up'></textarea>
+                        </div>
 
-                        {/* DAYS LEFT BEFORE MEETING THE PET */}
-                        <div className='justify-center hidden gap-2 pt-3'>
-                            <p className='font-medium text-center text-white shadow-custom bg-primary rounded-md py-3 px-4'>11 more days until meet up</p>
+                        {/* SUBMIT BUTTON */}
+                        <div className='flex justify-center gap-2 pt-7'>
+                            <button onClick={submitReschedule} className='bg-[#90b845] hover:bg-[#98c24a] cursor-pointer duration-150 font-medium gap-2 text-white py-1 px-5 rounded-md'>{loading ? 'SUBMITTING...' : 'SUBMIT'}</button>
+                            <button onClick={() => setIsScheduled(true)} className='bg-[#D25A5A] hover:bg-[#c25454] cursor-pointer duration-150 font-medium gap-2 text-white py-1 px-5 rounded-md'>CANCEL</button>
                         </div>
                     </div>
                 )}
+
                 
             </div>
         </div>

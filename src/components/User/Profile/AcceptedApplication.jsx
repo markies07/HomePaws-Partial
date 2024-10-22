@@ -5,15 +5,16 @@ import complete from './assets/complete.svg'
 import comment from './assets/white-comment.svg'
 import schedule from './assets/schedule.svg'
 import whiteApplication from './assets/white-application.svg'
-import paw from './assets/white-paw.svg'
 import cancel from './assets/cancel.svg'
 import Schedule from './Schedule'
-import contract from './assets/contract.svg'
 import { useNavigate, useParams } from 'react-router-dom'
-import { doc, getDoc } from 'firebase/firestore'
+import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from 'firebase/firestore'
 import { db } from '../../../firebase/firebase'
 import { AuthContext } from '../../General/AuthProvider'
 import LoadingScreen from '../../General/LoadingScreen'
+import AdoptionContract from './AdoptionContract'
+import CancelRehome from './CancelRehome'
+import paw from './assets/white-paw.svg'
 
 function AcceptedApplication() {
     const {user, userData } = useContext(AuthContext);
@@ -24,6 +25,9 @@ function AcceptedApplication() {
     const [adopter, setAdopter] = useState({});
     const [loading, setLoading] = useState(true);
     const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+    const [isMeetup, setIsMeetup] = useState(false);
+    const [isCancel, setIsCancel] = useState(false);
+    const today = new Date().toISOString().split('T')[0];
     
     // FETCHING ACCPETED APPLICAITON DATA
     useEffect(() => {
@@ -92,9 +96,124 @@ function AcceptedApplication() {
         }
     }, [applicationID]);
 
+    let image;
+
+    if (pet && pet.petImages && pet.petImages.length > 0) {
+        console.log('Pet Images:', pet.petImages);  // This will log the pet images array
+        image = pet.petImages[0]; // Access the first image safely
+      } else {
+        console.log('No images found for the pet');
+        image = null;  // Fallback if no images are found
+      }
+
+
+    // UPDATING STATUS
+    useEffect(() => {
+        const updateStatus = async () => {
+      
+          if (data?.meetupSchedule?.meetUpDate === today) {
+            try {
+                setIsMeetup(true);
+                const docRef = doc(db, 'acceptedApplications', data.applicationID);
+                // const notificationRef = collection(db, 'notifications');
+                
+                // ADOPTER
+                // await addDoc(notificationRef, {
+                //     content: `Today is your meet-up with ${pet.petName}.`,
+                //     applicationID: data.applicationID,
+                //     senderName: 'Today',
+                //     type: 'adoption',
+                //     image: image,
+                //     senderId: data.petOwnerID,
+                //     userId: data.adopterUserID,
+                //     isRead: false,
+                //     timestamp: serverTimestamp(),
+                // });
+                
+
+                // // PET OWNER
+                // await addDoc(notificationRef, {
+                //     content: `Today is your meet-up with ${data.adopterName}.`,
+                //     applicationID: data.applicationID,
+                //     type: 'adoption',
+                //     image: image,
+                //     senderId: data.adopterUserID,
+                //     userId: data.petOwnerID,
+                //     isRead: false,
+                //     timestamp: serverTimestamp(),
+                // });
+
+                await updateDoc(docRef, {
+                    status: 'meetup',
+                    meetupNotified: true,
+                });
+                
+
+            } catch (error) {
+                console.error("Error updating document: ", error);
+            }
+          } else {
+                console.log('Condition not met, status not updated');
+          }
+        };
+      
+        if (data) {
+            updateStatus();
+        } else {
+            console.log('Data is not available yet');
+        }
+      }, [data, today, db]);
+
 
     const toggleSchedule = () => {
         setIsScheduleOpen(!isScheduleOpen);
+    }
+
+    const toggleCancel = () => {
+        setIsCancel(!isCancel);
+    }
+
+    // DAYS BEFORE MEETUP
+    const calculateDaysUntilMeetup = (meetUpDate) => {
+        const today = new Date(); // Get today's date
+        const targetDate = new Date(meetUpDate); // Convert the meetUpDate to a Date object
+    
+        const timeDifference = targetDate - today; // Get the difference in milliseconds
+        const daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24)); // Convert to days
+    
+        return daysDifference;
+    }
+
+
+    // MESSAGING EACH OTHER
+    const handleStartChat = async (receiver) => {
+
+        const q = query(
+            collection(db, 'chats'),
+            where('participants', 'array-contains', receiver)
+        );
+
+        const querySnapshot = await getDocs(q);
+        let existingChat = null;
+
+        querySnapshot.forEach(doc => {
+            const participants = doc.data().participants;
+            if(participants.includes(receiver)) {
+                existingChat = doc.id;
+            }
+        });
+
+        let chatID;
+        if(existingChat){
+            chatID = existingChat;
+        }
+        else{
+            const newChatRef = await addDoc(collection(db, 'chats'), {
+                participants: [user.uid, receiver],
+            })
+            chatID = newChatRef.id;
+        }
+        navigate(`/dashboard/chat/convo/${chatID}`);
     }
 
 
@@ -109,7 +228,6 @@ function AcceptedApplication() {
           <div className='bg-secondary flex flex-col mb-3 pt-3 overflow-hidden flex-grow sm:pt-5 relative w-full shadow-custom h-full sm:rounded-md lg:rounded-lg'>
                 <img onClick={() => window.history.back()} className='w-9 p-1 border-2 border-transparent hover:border-text duration-150 absolute top-2 right-2 cursor-pointer' src={close} alt="" />
                 <p className='text-2xl text-center sm:text-start pt-6 px-3 sm:px-5 font-semibold sm:pt-0'>Rehoming in Progress</p>
-                
                 {/* PROGRESS BAR */}
                 <div className='relative sm:w-[90%] xl:w-[70%] sm:mx-auto mt-10 h-28 sm:h-auto px-5 flex justify-between'>
                     {/* 1ST PROGRESS */}
@@ -129,7 +247,7 @@ function AcceptedApplication() {
                     {/* 3RD PROGRESS */}
                     <div className='flex z-10 items-center flex-col self-end sm:self-auto sm:pt-5 justify-center'>
                         <div className='w-8 h-8 sm:w-10 sm:h-10 bg-primary flex justify-center items-center rounded-full'>
-                            <img className={`${data.status !== 'accepted' && data.status !== 'scheduled' ? 'block' : 'hidden'} w-5 h-5`} src={check} alt="" />
+                            <img className={`${data.status !== 'accepted' && data.status !== 'scheduled' || isMeetup ? 'block' : 'hidden'} w-5 h-5`} src={check} alt="" />
                         </div>
                         <p className='text-xs md:text-base leading-3 md:leading-tight font-semibold text-center py-2'>Day of<br />Meet-Up</p>
                     </div>
@@ -144,7 +262,7 @@ function AcceptedApplication() {
                     {/* BAR */}
                     <div className='absolute px-14 md:px-16 top-0 sm:pb-4 md:pb-8 left-0 w-full h-full flex justify-between items-center'>
                         <div className={`${data.status !== 'accepted' ? 'bg-primary' : 'bg-[#D9D9D9]'} w-full h-3 border-r-2`}></div>
-                        <div className={`${data.status !== 'accepted' && data.status !== 'scheduled' ? 'bg-primary' : 'bg-[#D9D9D9]'} w-full h-3 border-r-2`}></div>
+                        <div className={`${data.status !== 'accepted' && data.status !== 'scheduled' || isMeetup ? 'bg-primary' : 'bg-[#D9D9D9]'} w-full h-3 border-r-2`}></div>
                         <div className={`${data.status !== 'accepted' && data.status !== 'scheduled' && data.status !== 'meetup' ? 'bg-primary' : 'bg-[#D9D9D9]'} w-full h-3 border-r-2`}></div>
                     </div>
                 </div>
@@ -154,15 +272,15 @@ function AcceptedApplication() {
                     <div className='w-full py-3 px-3 gap-2 md:gap-0 flex-col md:flex-row sm:px-5 flex justify-between items-center rounded-md lg:rounded-lg bg-[#E9E9E9]'>
                         <div className='flex md:flex-col sm:text-lg md:gap-0 xl:flex-row xl:gap-2 gap-2'>
                             <p className='font-semibold'>{data.status === 'accepted' ? 'Action needed:' : 'Status:'}</p>
-                            <p>{data.status === 'accepted' ? 'Schedule the meet-up' : `11 more days until meet up`}</p>
+                            <p>{data.status === 'accepted' ? 'Schedule the meet-up' : calculateDaysUntilMeetup(data.meetupSchedule.meetUpDate) >= 1 ? `${calculateDaysUntilMeetup(data.meetupSchedule.meetUpDate)} more ${calculateDaysUntilMeetup(data.meetupSchedule.meetUpDate) > 1 ? 'days' : 'day'} until meet up` : 'Meet-up day is here!'}</p>
                         </div>
                         <div className='flex gap-2'>
-                            <button onClick={toggleSchedule} className={`${data.status !== 'meetup' ? 'flex' : 'hidden'} flex bg-[#90b845] cursor-pointer duration-150 hover:bg-[#98c24a] items-center text-xs md:text-base font-medium gap-2 text-white p-2 rounded-md`}><img className='w-4 h-4' src={schedule} alt="" />Meet-up Schedule</button>
-                            <button className={`${data.status === 'meetup' ? 'flex' : 'hidden'} bg-[#90b845] text-xs md:text-base cursor-pointer duration-150 hover:bg-[#98c24a] items-center font-medium gap-2 text-white p-2 rounded-md`}><img className='w-5 h-5' src={paw} alt="" />Rehome Complete</button>
-                            <button className='flex bg-[#D25A5A] text-xs md:text-base cursor-pointer duration-150 hover:bg-[#c25454] items-center font-medium gap-2 text-white p-2 rounded-md'><img className='w-[14px] h-[14px]' src={cancel} alt="" />Cancel Rehome</button>
+                            <button onClick={toggleSchedule} className={`flex bg-[#90b845] cursor-pointer duration-150 hover:bg-[#98c24a] items-center text-xs md:text-base font-medium gap-2 text-white p-2 rounded-md`}><img className='w-4 h-4' src={schedule} alt="" />Meet-up Schedule</button>
+                            <button onClick={toggleCancel} className='flex bg-[#D25A5A] text-xs md:text-base cursor-pointer duration-150 hover:bg-[#c25454] items-center font-medium gap-2 text-white p-2 rounded-md'><img className='w-[14px] h-[14px]' src={cancel} alt="" />Cancel Rehome</button>
                         </div>
                     </div>
                 </div>
+
 
                 <div className='w-full 2xl:w-[90%] 2xl:mx-auto flex flex-col lg:flex-row mt-5 lg:mt-3 lg:px-5 lg:gap-3'>
 
@@ -201,8 +319,10 @@ function AcceptedApplication() {
                                 </div>
                             </div>
                             <div className='pt-5 pb-2 flex justify-center gap-2'>
-                                <button className='flex bg-[#6AAAAA] cursor-pointer duration-150 hover:bg-[#619b9b] items-center text-xs md:text-base font-medium gap-2 text-white p-2 rounded-md'><img className='w-4 h-4' src={comment} alt="" />Message Owner</button>
-                                <button className='flex bg-[#6AAAAA] cursor-pointer duration-150 hover:bg-[#619b9b] items-center text-xs md:text-base font-medium gap-2 text-white p-2 rounded-md'><img className='w-4 h-4' src={contract} alt="" />Adoption Contract</button>
+                                <button onClick={() => handleStartChat(data.petOwnerID)} className={`${data.adopterUserID === user.uid ? 'flex' : 'hidden'} bg-[#6AAAAA] leading-snug cursor-pointer duration-150 hover:bg-[#619b9b] items-center text-xs md:text-base font-medium gap-2 text-white p-2 rounded-md`}><img className='w-4 h-4' src={comment} alt="" />Message Owner</button>
+                                {data.meetupSchedule && 
+                                    <AdoptionContract data={data} pet={pet} />
+                                }
                             </div>
                         </div>
                     </div>
@@ -242,7 +362,8 @@ function AcceptedApplication() {
                                 </div>
                             </div>
                             <div className='pt-5 pb-2 flex justify-center gap-2'>
-                                <button className='flex bg-[#6AAAAA] cursor-pointer duration-150 hover:bg-[#619b9b] items-center text-xs md:text-base font-medium gap-2 text-white p-2 rounded-md'><img className='w-4 h-4' src={whiteApplication} alt="" />View Application</button>
+                                <button onClick={() => handleStartChat(data.adopterUserID)} className={`${data.petOwnerID === user.uid ? 'flex' : 'hidden'} bg-[#6AAAAA] leading-snug cursor-pointer duration-150 hover:bg-[#619b9b] items-center text-xs md:text-base font-medium gap-2 text-white p-2 rounded-md`}><img className='w-4 h-4' src={comment} alt="" />Message Adopter</button>
+                                <button onClick={() => navigate(`/dashboard/profile/applications/application/${data.applicationID}`)} className='flex bg-[#6AAAAA] leading-snug cursor-pointer duration-150 hover:bg-[#619b9b] items-center text-xs md:text-base font-medium gap-2 text-white p-2 rounded-md'><img className='w-4 h-4' src={whiteApplication} alt="" />View Application</button>
                             </div>
                         </div>
                     </div>
@@ -250,7 +371,12 @@ function AcceptedApplication() {
 
                 {/* SCHEDULE */}
                 <div className={isScheduleOpen ? 'block' : 'hidden'}>
-                    <Schedule closeUI={toggleSchedule} data={data} />
+                    <Schedule isMeetup={isMeetup} closeUI={toggleSchedule} data={data} />
+                </div>
+
+                {/* CANCEL REHOME */}
+                <div className={isCancel ? 'block' : 'hidden'}>
+                    <CancelRehome data={data} pet={pet} closeCancel={toggleCancel} />
                 </div>
 
           </div>

@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react'
 import close from './assets/close-dark.svg'
 import { notifyErrorOrange, notifySuccessOrange } from '../../General/CustomToast';
-import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/firebase';
 import { AuthContext } from '../../General/AuthProvider';
 
@@ -22,18 +22,25 @@ function Reject({application, closeReject, petImage}) {
         try{
             const applicationRef = doc(db, 'adoptionApplications', application.applicationID);
 
-            await addDoc(collection(db, 'rejectedApplications'), {
-                adopterID: application.adopterUserID,
-                applicationID: application.applicationID,
-                petID: application.petID,
-                rejectReason: rejectReason,
-                timestamp: serverTimestamp(),
-                petOwnerID: application.petOwnerID,
-            });
+            const applicationSnap = await getDoc(applicationRef);
+
+            const applicationData = applicationSnap.data();
 
             await updateDoc(applicationRef, {
                 status: 'rejected',
             });
+
+            await setDoc(doc(db, 'rejectedApplications', application.applicationID), {
+                ...applicationData,
+                adopterID: application.adopterUserID,
+                applicationID: application.applicationID,
+                petID: application.petID,
+                status: 'rejected',
+                rejectReason: rejectReason,
+                rejectedAt: serverTimestamp(),
+                petOwnerID: application.petOwnerID,
+            });
+
 
             // NOTIFICATION
             const notificationRef = collection(db, 'notifications');

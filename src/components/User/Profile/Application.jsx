@@ -7,11 +7,10 @@ import { AuthContext } from '../../General/AuthProvider'
 import Reject from './Reject'
 import RejectionDetails from './RejectionDetails'
 import { confirm, successAlert } from '../../General/CustomAlert'
-import { notifySuccessOrange } from '../../General/CustomToast'
 
 function Application() {
     const navigate = useNavigate();
-    const {user} = useContext(AuthContext);
+    const {user, userData} = useContext(AuthContext);
     const { applicationID } = useParams();
     const [applicationData, setApplicationData] = useState({});
     const [petData, setPetData] = useState({});
@@ -77,7 +76,9 @@ function Application() {
                         await setDoc(doc(db, 'acceptedApplications', applicationID), {
                             ...applicationData,
                             status: 'accepted',
-                            isScheduled: 'waiting',
+                            meetupNotified: false,
+                            isScheduled: false,
+                            petOwnerName: userData.fullName,
                             acceptedDate: serverTimestamp(),
                         });
 
@@ -230,7 +231,7 @@ function Application() {
                     </div>
 
                     {/* REVIEWING APPLICAITON */}
-                    <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.petOwnerID !== user.uid && applicationData.status !== 'rejected' ? 'flex' : 'hidden'}`}>
+                    <div className={`pt-5 pb-2 justify-center gap-3 sm:gap-5 ${applicationData.petOwnerID !== user.uid && applicationData.status !== 'rejected' && applicationData.status !== 'accepted' ? 'flex' : 'hidden'}`}>
                         <p className='border-2 border-primary font-medium text-primary bg-secondary py-2 px-6 text-sm sm:text-base rounded-full'>Application Under Review</p>
                     </div>
 
